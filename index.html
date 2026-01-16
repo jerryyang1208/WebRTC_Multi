@@ -293,586 +293,537 @@
         const myIdElement = document.getElementById('myId');
         const meetingStatusElement = document.getElementById('meetingStatus');
         const connectionStatusElement = document.getElementById('connectionStatus');
-
+      
         // 核心状态
         let ws = null;
         let myStream = null;
-        let peers = {}; // { 对方ID: { pc: RTCPeerConnection, tracksAdded: false } }
         let myId = null;
         let isCameraOn = false;
-        let isJoined = false;
-        let participants = new Set(); // 参会者ID集合（完全跟随服务器数据）
-        let isFirstConnect = true; // 标记是否首次连接
-
-        // 初始化
+        let isInMeeting = false;
+        let members = new Set(); // 会议成员集合
+        let connections = new Map(); // 对等连接
+        
+        // 新增：跟踪连接建立状态
+        let connectionCheckTimer = null;
+        let pendingConnections = new Set(); // 等待建立的连接
+      
+        // 初始化事件监听
         connectBtn.addEventListener('click', connectToServer);
         startCameraBtn.addEventListener('click', toggleCamera);
         joinMeetingBtn.addEventListener('click', joinMeeting);
         leaveMeetingBtn.addEventListener('click', leaveMeeting);
-
-        // 转换HTTP地址到WS地址
-        function toWsUrl(httpUrl) {
-            return httpUrl.replace('http://', 'ws://').replace('https://', 'wss://');
-        }
-
-        // 连接信令服务器 - 修复首次连接错误问题
+      
+        // 连接服务器
         function connectToServer() {
-            // 防止重复点击
-            if (connectBtn.disabled) return;
-            connectBtn.disabled = true;
-            
-            if (ws) {
-                ws.close();
-                ws = null;
+          if (connectBtn.disabled) return;
+          
+          const url = serverUrlInput.value.trim();
+          const wsUrl = url.replace('http://', 'ws://').replace('https://', 'wss://');
+          
+          updateStatus(`正在连接服务器...`, 'info');
+          connectBtn.disabled = true;
+          
+          // 清理旧连接
+          if (ws) ws.close();
+          
+          ws = new WebSocket(wsUrl);
+          
+          ws.onopen = () => {
+            updateStatus('✅ 已连接服务器', 'success');
+            connectionStatusElement.textContent = '已连接';
+            startCameraBtn.disabled = false;
+            joinMeetingBtn.disabled = false;
+            connectBtn.disabled = false;
+          };
+          
+          ws.onmessage = (e) => {
+            try {
+              const msg = JSON.parse(e.data);
+              handleMessage(msg);
+            } catch (err) {
+              console.error('消息解析失败:', err);
             }
-            
-            const url = toWsUrl(serverUrlInput.value.trim());
-            updateStatus(`正在连接 ${url}...`, 'info');
-            
-            // 修复：增加连接超时处理
-            const connectTimeout = setTimeout(() => {
-                updateStatus('❌ 连接服务器超时，请检查地址或服务器状态', 'error');
-                connectBtn.disabled = false;
-                isFirstConnect = false;
-            }, 10000); // 10秒超时
-            
-            ws = new WebSocket(url);
-            
-            // 连接成功
-            ws.onopen = () => {
-                clearTimeout(connectTimeout); // 清除超时定时器
-                updateStatus('✅ 已连接到信令服务器', 'success');
-                connectionStatusElement.textContent = '已连接';
-                startCameraBtn.disabled = false;
-                joinMeetingBtn.disabled = false;
-                connectBtn.disabled = false;
-                isFirstConnect = false;
-            };
-
-            // 接收消息
-            ws.onmessage = (e) => {
-                try {
-                    const msg = JSON.parse(e.data);
-                    handleServerMsg(msg);
-                } catch (err) {
-                    console.error('解析消息失败:', err);
-                    // 非首次连接才显示解析错误，避免首次连接干扰
-                    if (!isFirstConnect) {
-                        updateStatus(`❌ 消息解析错误: ${err.message}`, 'error');
-                    }
+          };
+          
+          ws.onclose = () => {
+            updateStatus('❌ 与服务器断开连接', 'error');
+            connectionStatusElement.textContent = '已断开';
+            connectBtn.disabled = false;
+            resetState();
+          };
+          
+          ws.onerror = (err) => {
+            console.error('连接错误:', err);
+            updateStatus('❌ 连接失败，请检查服务器', 'error');
+            connectBtn.disabled = false;
+          };
+        }
+      
+        // 消息处理
+        function handleMessage(msg) {
+          switch (msg.type) {
+            case 'id':
+              myId = msg.id;
+              myIdElement.textContent = myId;
+              break;
+              
+            case 'members':
+              // 更新成员列表
+              const newMembers = new Set(msg.members);
+              members = newMembers;
+              updateParticipantsUI();
+              
+              // 重置连接检查
+              if (connectionCheckTimer) {
+                clearTimeout(connectionCheckTimer);
+                connectionCheckTimer = null;
+              }
+              
+              // 清空等待列表
+              pendingConnections.clear();
+              
+              // 计算需要建立的连接
+              const otherMembers = Array.from(members).filter(id => id !== myId);
+              otherMembers.forEach(id => {
+                if (!connections.has(id)) {
+                  pendingConnections.add(id);
                 }
-            };
-
-            // 连接关闭
-            ws.onclose = (event) => {
-                clearTimeout(connectTimeout);
-                // 修复：区分主动关闭和异常关闭
-                if (event.wasClean) {
-                    updateStatus('ℹ️ 与服务器正常断开连接', 'info');
+              });
+              
+              // 如果已开启摄像头，建立新连接
+              if (isCameraOn && isInMeeting) {
+                if (otherMembers.length === 0) {
+                  // 只有自己一个人
+                  updateStatus('✅ 已加入会议（当前只有您一人）', 'success');
                 } else {
-                    // 非首次连接才显示错误，避免首次连接误报
-                    if (!isFirstConnect) {
-                        updateStatus('❌ 与服务器异常断开连接', 'error');
-                    } else {
-                        updateStatus('❌ 连接服务器失败，请检查地址是否正确', 'error');
-                    }
+                  updateStatus(`正在建立P2P连接 (${otherMembers.length}个连接)...`, 'info');
+                  establishConnections();
+                  
+                  // 启动连接检查计时器
+                  connectionCheckTimer = setTimeout(() => {
+                    checkConnectionsStatus();
+                  }, 3000);
                 }
-                connectionStatusElement.textContent = '已断开';
-                connectBtn.disabled = false;
-                resetState();
-                isFirstConnect = false;
-            };
-
-            // 连接错误
-            ws.onerror = (err) => {
-                clearTimeout(connectTimeout);
-                console.error('WS错误:', err);
-                // 非首次连接才显示详细错误
-                if (!isFirstConnect) {
-                    updateStatus(`❌ 连接错误: ${err.message || '未知错误'}`, 'error');
-                } else {
-                    updateStatus('❌ 连接服务器失败，请确保服务器已启动', 'error');
+              }
+              break;
+              
+            case 'user-join':
+              if (msg.id !== myId) {
+                members.add(msg.id);
+                updateParticipantsUI();
+                
+                // 添加到等待连接列表
+                pendingConnections.add(msg.id);
+                
+                if (isCameraOn && isInMeeting) {
+                  createPeerConnection(msg.id);
+                  updateStatus(`正在与新成员 ${msg.id} 建立连接...`, 'info');
                 }
-                connectBtn.disabled = false;
-                isFirstConnect = false;
-            };
+              }
+              break;
+              
+            case 'user-leave':
+              members.delete(msg.id);
+              pendingConnections.delete(msg.id);
+              updateParticipantsUI();
+              closeConnection(msg.id);
+              break;
+              
+            case 'signal':
+              if (msg.from && msg.data) {
+                handleSignal(msg.from, msg.data);
+              }
+              break;
+          }
         }
-
-        // 处理服务器消息
-        function handleServerMsg(msg) {
-            switch (msg.type) {
-                // 收到自己的ID
-                case 'client-id':
-                    myId = msg.id;
-                    myIdElement.textContent = myId;
-                    updateParticipantsUI();
-                    break;
-                
-                // 收到全量参会者列表（核心：完全替换本地集合）
-                case 'participants-list':
-                    participants = new Set(msg.participants);
-                    updateParticipantsUI();
-                    // 如果已加入会议，建立P2P连接
-                    if (isJoined && isCameraOn) {
-                        createAllPeerConnections();
-                    }
-                    break;
-                
-                // 新用户加入
-                case 'user-joined':
-                    participants.add(msg.id);
-                    updateParticipantsUI();
-                    if (isJoined && isCameraOn && msg.id !== myId) {
-                        // 修复：先创建连接，延迟发送Offer确保对方准备好
-                        createPeerConnection(msg.id);
-                        setTimeout(() => sendOffer(msg.id), 500);
-                    }
-                    break;
-                
-                // 用户离开
-                case 'user-left':
-                    participants.delete(msg.id);
-                    updateParticipantsUI();
-                    removePeer(msg.id);
-                    removeVideoElement(msg.id);
-                    break;
-                
-                // 收到Offer
-                case 'offer':
-                    handleOffer(msg.from, msg.offer);
-                    break;
-                
-                // 收到Answer
-                case 'answer':
-                    handleAnswer(msg.from, msg.answer);
-                    break;
-                
-                // 收到ICE候选
-                case 'ice-candidate':
-                    handleIceCandidate(msg.from, msg.candidate);
-                    break;
-                
-                // 错误消息
-                case 'error':
-                    // 修复：服务器错误只在非首次连接时显示
-                    if (!isFirstConnect) {
-                        updateStatus(`❌ ${msg.message}`, 'error');
-                    }
-                    break;
+      
+        // 检查连接状态
+        function checkConnectionsStatus() {
+          const otherMembers = Array.from(members).filter(id => id !== myId);
+          
+          if (otherMembers.length === 0) {
+            updateStatus('✅ 已加入会议（当前只有您一人）', 'success');
+            return;
+          }
+          
+          // 计算已建立的连接
+          const establishedConnections = otherMembers.filter(id => {
+            const pc = connections.get(id);
+            return pc && pc.connectionState === 'connected';
+          });
+          
+          if (establishedConnections.length === otherMembers.length) {
+            // 所有连接都建立成功
+            updateStatus(`✅ 会议连接已就绪 (${otherMembers.length}个P2P连接)`, 'success');
+          } else if (establishedConnections.length > 0) {
+            // 部分连接成功
+            updateStatus(`✅ 已连接 ${establishedConnections.length}/${otherMembers.length} 个参与者`, 'info');
+          } else {
+            // 没有连接成功
+            updateStatus('⚠️ 正在尝试建立P2P连接...', 'info');
+            
+            // 重新检查
+            connectionCheckTimer = setTimeout(() => {
+              checkConnectionsStatus();
+            }, 2000);
+          }
+        }
+      
+        // 处理信令消息
+        function handleSignal(from, data) {
+          const pc = connections.get(from);
+          
+          if (!pc) {
+            // 如果连接不存在，先创建
+            createPeerConnection(from);
+            setTimeout(() => handleSignal(from, data), 100);
+            return;
+          }
+          
+          if (data.sdp) {
+            const desc = new RTCSessionDescription(data.sdp);
+            pc.setRemoteDescription(desc).then(() => {
+              if (desc.type === 'offer') {
+                return pc.createAnswer().then(answer => {
+                  pc.setLocalDescription(answer);
+                  sendSignal(from, { sdp: answer });
+                  
+                  // 连接建立后更新状态
+                  pendingConnections.delete(from);
+                  updateConnectionStatus();
+                });
+              } else if (desc.type === 'answer') {
+                // 当收到answer时，连接建立
+                pendingConnections.delete(from);
+                updateConnectionStatus();
+              }
+            }).catch(console.error);
+          } else if (data.candidate) {
+            pc.addIceCandidate(new RTCIceCandidate(data.candidate))
+              .catch(console.error);
+          }
+        }
+      
+        // 更新连接状态
+        function updateConnectionStatus() {
+          if (pendingConnections.size === 0) {
+            const otherMembers = Array.from(members).filter(id => id !== myId);
+            if (otherMembers.length > 0) {
+              updateStatus(`✅ 已建立所有P2P连接 (${otherMembers.length}个连接)`, 'success');
             }
+          }
         }
-
-        // 发送消息到服务器
-        function sendToServer(data) {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify(data));
-            } else if (!isFirstConnect) { // 非首次连接才提示发送失败
-                updateStatus('❌ 无法发送消息：未连接到服务器', 'error');
+      
+        // 发送信令消息
+        function sendSignal(target, data) {
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+              type: 'signal',
+              target: target,
+              data: data
+            }));
+          }
+        }
+      
+        // 创建对等连接
+        function createPeerConnection(peerId) {
+          if (connections.has(peerId)) return connections.get(peerId);
+          
+          const pc = new RTCPeerConnection({
+            iceServers: [
+              { urls: 'stun:stun.l.google.com:19302' },
+              { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+          });
+          
+          connections.set(peerId, pc);
+          
+          // 添加本地轨道
+          if (myStream) {
+            myStream.getTracks().forEach(track => {
+              if (pc.getSenders().some(s => s.track === track)) return;
+              pc.addTrack(track, myStream);
+            });
+          }
+          
+          // ICE候选
+          pc.onicecandidate = (e) => {
+            if (e.candidate) {
+              sendSignal(peerId, { candidate: e.candidate });
             }
+          };
+          
+          // 远程轨道
+          pc.ontrack = (e) => {
+            if (e.streams && e.streams[0]) {
+              addRemoteVideo(peerId, e.streams[0]);
+            }
+          };
+          
+          // 连接状态
+          pc.onconnectionstatechange = () => {
+            console.log(`连接状态 [${peerId}]: ${pc.connectionState}`);
+            
+            if (pc.connectionState === 'connected') {
+              // 连接成功，从等待列表中移除
+              pendingConnections.delete(peerId);
+              updateConnectionStatus();
+            } else if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+              // 连接失败，尝试重新连接
+              setTimeout(() => {
+                if (isInMeeting && members.has(peerId) && pc.connectionState !== 'connected') {
+                  console.log(`尝试重新连接 ${peerId}...`);
+                  connections.delete(peerId);
+                  createPeerConnection(peerId);
+                }
+              }, 3000);
+            }
+          };
+          
+          // 如果是发起方，创建offer
+          if (Array.from(members).indexOf(myId) < Array.from(members).indexOf(peerId)) {
+            setTimeout(() => createOffer(peerId), 500);
+          }
+          
+          return pc;
         }
-
+      
+        // 创建Offer
+        function createOffer(peerId) {
+          const pc = connections.get(peerId);
+          if (!pc) return;
+          
+          pc.createOffer({
+            offerToReceiveAudio: true,
+            offerToReceiveVideo: true
+          }).then(offer => {
+            return pc.setLocalDescription(offer);
+          }).then(() => {
+            sendSignal(peerId, { sdp: pc.localDescription });
+          }).catch(console.error);
+        }
+      
+        // 建立所有连接
+        function establishConnections() {
+          const peerIds = Array.from(members).filter(id => 
+            id !== myId && !connections.has(id)
+          );
+          
+          peerIds.forEach(peerId => {
+            createPeerConnection(peerId);
+          });
+        }
+      
+        // 关闭连接
+        function closeConnection(peerId) {
+          const pc = connections.get(peerId);
+          if (pc) {
+            pc.close();
+            connections.delete(peerId);
+          }
+          removeVideoElement(peerId);
+          pendingConnections.delete(peerId);
+        }
+      
         // 开启/关闭摄像头
         async function toggleCamera() {
-            if (isCameraOn) {
-                // 关闭摄像头
-                myStream.getTracks().forEach(track => track.stop());
-                myStream = null;
-                isCameraOn = false;
-                startCameraBtn.textContent = '开启摄像头';
-                updateStatus('📹 摄像头已关闭', 'info');
-                clearVideos();
-            } else {
-                // 开启摄像头
-                try {
-                    myStream = await navigator.mediaDevices.getUserMedia({
-                        video: true,
-                        audio: true
-                    });
-                    isCameraOn = true;
-                    startCameraBtn.textContent = '关闭摄像头';
-                    updateStatus('📹 摄像头已开启', 'success');
-                    // 添加本地视频
-                    addLocalVideo();
-                } catch (err) {
-                    updateStatus(`❌ 开启摄像头失败: ${err.message}`, 'error');
-                    console.error(err);
-                }
+          if (isCameraOn) {
+            // 关闭摄像头
+            myStream.getTracks().forEach(track => track.stop());
+            myStream = null;
+            isCameraOn = false;
+            startCameraBtn.textContent = '开启摄像头';
+            updateStatus('📹 摄像头已关闭', 'info');
+            clearVideos();
+          } else {
+            // 开启摄像头
+            try {
+              const constraints = {
+                video: {
+                  width: { ideal: 640 },
+                  height: { ideal: 480 },
+                  frameRate: { ideal: 20 }
+                },
+                audio: true
+              };
+              
+              myStream = await navigator.mediaDevices.getUserMedia(constraints);
+              isCameraOn = true;
+              startCameraBtn.textContent = '关闭摄像头';
+              updateStatus('📹 摄像头已开启', 'success');
+              addLocalVideo();
+            } catch (err) {
+              updateStatus(`❌ 开启摄像头失败: ${err.message}`, 'error');
             }
+          }
         }
-
+      
         // 加入会议
         function joinMeeting() {
-            if (!isCameraOn) {
-                updateStatus('请先开启摄像头', 'error');
-                return;
-            }
-            
-            isJoined = true;
+          if (!isCameraOn) {
+            updateStatus('请先开启摄像头', 'error');
+            return;
+          }
+          
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            isInMeeting = true;
             joinMeetingBtn.disabled = true;
             leaveMeetingBtn.disabled = false;
             meetingStatusElement.textContent = '已加入';
-            updateStatus('🤝 正在建立P2P连接...', 'info');
             
-            // 主动发送加入会议指令
-            sendToServer({ type: 'join-meeting' });
-            // 请求全量参会者列表
-            sendToServer({ type: 'get-participants' });
-            // 建立所有P2P连接
-            createAllPeerConnections();
+            ws.send(JSON.stringify({ type: 'join' }));
+            updateStatus('🤝 正在加入会议...', 'info');
+          }
         }
-
+      
         // 离开会议
         function leaveMeeting() {
-            isJoined = false;
-            joinMeetingBtn.disabled = false;
-            leaveMeetingBtn.disabled = true;
-            meetingStatusElement.textContent = '未加入';
-            
-            // 关闭所有P2P连接
-            Object.keys(peers).forEach(id => removePeer(id));
-            // 通知服务器
-            sendToServer({ type: 'leave-meeting' });
-            
-            updateStatus('👋 已离开会议', 'info');
+          isInMeeting = false;
+          joinMeetingBtn.disabled = false;
+          leaveMeetingBtn.disabled = true;
+          meetingStatusElement.textContent = '未加入';
+          
+          // 清理计时器
+          if (connectionCheckTimer) {
+            clearTimeout(connectionCheckTimer);
+            connectionCheckTimer = null;
+          }
+          
+          // 关闭所有连接
+          connections.forEach((pc, id) => {
+            pc.close();
+            removeVideoElement(id);
+          });
+          connections.clear();
+          pendingConnections.clear();
+          
+          // 通知服务器
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'leave' }));
+          }
+          
+          updateStatus('👋 已离开会议', 'info');
+          members.clear();
+          updateParticipantsUI();
         }
-
-        // 创建所有P2P连接
-        function createAllPeerConnections() {
-            participants.forEach(id => {
-                if (id !== myId && !peers[id]) {
-                    createPeerConnection(id);
-                    // 修复：延迟发送Offer，避免连接未初始化完成
-                    setTimeout(() => sendOffer(id), 500);
-                }
-            });
-        }
-
-        // 创建单个P2P连接
-        function createPeerConnection(peerId) {
-            // 增强ICE服务器配置，增加备用STUN服务器
-            const pc = new RTCPeerConnection({
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' },
-                    { urls: 'stun:stun2.l.google.com:19302' }
-                ]
-            });
-            
-            // 存储PeerConnection
-            peers[peerId] = { pc, tracksAdded: false };
-
-            // 监听ICE候选
-            pc.onicecandidate = (e) => {
-                if (e.candidate) {
-                    sendToServer({
-                        type: 'ice-candidate',
-                        target: peerId,
-                        candidate: e.candidate
-                    });
-                }
-            };
-
-            // 修复：增强ontrack监听，确保能捕获到远程流
-            pc.ontrack = (e) => {
-                console.log(`收到 ${peerId} 的媒体轨道:`, e.track.kind);
-                // 确保stream有轨道
-                if (e.streams && e.streams[0] && e.streams[0].getTracks().length > 0) {
-                    addRemoteVideo(peerId, e.streams[0]);
-                } else {
-                    // 备用方案：手动创建stream并添加轨道
-                    let stream = document.getElementById(`peer-${peerId}`)?.querySelector('video')?.srcObject;
-                    if (!stream) {
-                        stream = new MediaStream();
-                        addRemoteVideo(peerId, stream);
-                    }
-                    stream.addTrack(e.track);
-                }
-            };
-
-            // 监听远程流添加（兼容部分浏览器）
-            pc.onaddstream = (e) => {
-                console.log(`收到 ${peerId} 的媒体流（兼容模式）`);
-                addRemoteVideo(peerId, e.stream);
-            };
-
-            // 监听连接状态
-            pc.onconnectionstatechange = () => {
-                console.log(`P2P状态 [${peerId}]:`, pc.connectionState);
-                if (pc.connectionState === 'connected') {
-                    updateStatus(`✅ 与 ${peerId} 建立P2P连接`, 'success');
-                } else if (pc.connectionState === 'failed') {
-                    // 修复：P2P连接失败不显示全红错误，改用info状态
-                    updateStatus(`ℹ️ 与 ${peerId} 连接失败，正在重试...`, 'info');
-                    // 连接失败时自动重试
-                    setTimeout(() => {
-                        removePeer(peerId);
-                        createPeerConnection(peerId);
-                        sendOffer(peerId);
-                    }, 2000);
-                }
-            };
-
-            // 修复：确保本地轨道正确添加
-            if (myStream && !peers[peerId].tracksAdded) {
-                myStream.getTracks().forEach(track => {
-                    try {
-                        const sender = pc.addTrack(track, myStream);
-                        console.log(`添加本地${track.kind}轨道到 ${peerId}`, sender);
-                    } catch (err) {
-                        console.warn(`添加轨道到 ${peerId} 失败:`, err);
-                    }
-                });
-                peers[peerId].tracksAdded = true;
-            }
-
-            return pc;
-        }
-
-        // 发送Offer
-        function sendOffer(peerId) {
-            const pc = peers[peerId]?.pc;
-            if (!pc || pc.signalingState === 'closed') return;
-
-            pc.createOffer({
-                offerToReceiveVideo: true,
-                offerToReceiveAudio: true
-            }).then(offer => {
-                return pc.setLocalDescription(offer).then(() => offer);
-            }).then(offer => {
-                sendToServer({
-                    type: 'offer',
-                    target: peerId,
-                    offer: offer
-                });
-                console.log(`发送Offer到 ${peerId}`, offer);
-            }).catch(err => {
-                // 修复：Offer失败只在控制台打印，不显示全红错误
-                console.error(`向 ${peerId} 发送Offer失败:`, err);
-                // 只显示信息提示，不显示错误
-                updateStatus(`ℹ️ 与 ${peerId} 协商中，请稍候...`, 'info');
-                // Offer创建失败时重试
-                setTimeout(() => sendOffer(peerId), 1000);
-            });
-        }
-
-        // 处理收到的Offer
-        function handleOffer(peerId, offer) {
-            console.log(`收到 ${peerId} 的Offer`, offer);
-            // 创建P2P连接（如果不存在）
-            if (!peers[peerId]) createPeerConnection(peerId);
-            
-            const pc = peers[peerId].pc;
-            if (pc.signalingState === 'closed') return;
-            
-            pc.setRemoteDescription(new RTCSessionDescription(offer))
-                .then(() => pc.createAnswer())
-                .then(answer => {
-                    return pc.setLocalDescription(answer).then(() => answer);
-                })
-                .then(answer => {
-                    sendToServer({
-                        type: 'answer',
-                        target: peerId,
-                        answer: answer
-                    });
-                    console.log(`发送Answer到 ${peerId}`, answer);
-                })
-                .catch(err => {
-                    console.error('处理Offer失败:', err);
-                    // 修复：只显示信息提示，不显示错误
-                    updateStatus(`ℹ️ 处理 ${peerId} 的连接请求中...`, 'info');
-                });
-        }
-
-        // 处理收到的Answer
-        function handleAnswer(peerId, answer) {
-            console.log(`收到 ${peerId} 的Answer`, answer);
-            const pc = peers[peerId]?.pc;
-            if (!pc || pc.signalingState === 'closed') return;
-            
-            pc.setRemoteDescription(new RTCSessionDescription(answer))
-                .catch(err => {
-                    console.error('处理Answer失败:', err);
-                    updateStatus(`ℹ️ 与 ${peerId} 连接协商中...`, 'info');
-                });
-        }
-
-        // 处理ICE候选
-        function handleIceCandidate(peerId, candidate) {
-            const pc = peers[peerId]?.pc;
-            if (!pc || pc.signalingState === 'closed') return;
-            
-            pc.addIceCandidate(new RTCIceCandidate(candidate))
-                .catch(err => {
-                    console.warn(`添加ICE候选到 ${peerId} 失败:`, err);
-                });
-        }
-
-        // 移除P2P连接
-        function removePeer(peerId) {
-            if (peers[peerId]) {
-                try {
-                    peers[peerId].pc.close();
-                } catch (err) {
-                    console.warn(`关闭 ${peerId} 连接失败:`, err);
-                }
-                delete peers[peerId];
-            }
-        }
-
+      
         // === UI相关函数 ===
-        // 更新状态提示 - 核心修复：优化样式和显示逻辑
-        function updateStatus(text, type = 'success') {
-            statusBar.textContent = text;
-            statusBar.className = 'status-bar';
-            
-            // 确保关闭按钮始终显示
-            const closeBtn = document.createElement('span');
-            closeBtn.className = 'close-btn';
-            closeBtn.innerHTML = '✕';
-            closeBtn.onclick = () => {
-                statusBar.textContent = '';
-                statusBar.className = 'status-bar';
-            };
-            
-            // 清除现有关闭按钮，添加新的
-            const existingCloseBtn = statusBar.querySelector('.close-btn');
-            if (existingCloseBtn) existingCloseBtn.remove();
-            statusBar.appendChild(closeBtn);
-            
-            // 设置样式：确保文字可见
-            if (type === 'error') {
-                statusBar.classList.add('error');
-                statusBar.style.color = '#ffffff'; // 强制白色文字
-                statusBar.style.fontWeight = '600'; // 加粗文字
-            } else if (type === 'info') {
-                statusBar.classList.add('info');
-            }
-            // success状态使用默认样式
+        function updateStatus(text, type = 'info') {
+          statusBar.textContent = text;
+          statusBar.className = 'status-bar';
+          
+          if (type === 'error') {
+            statusBar.classList.add('error');
+          } else if (type === 'success') {
+            // 使用默认success样式
+          }
+          
+          // 更新状态文字颜色
+          statusBar.style.color = type === 'error' ? '#ffffff' : '#ffffff';
+          statusBar.style.fontWeight = type === 'error' ? '600' : '500';
         }
-
-        // 更新参会者UI
+      
         function updateParticipantsUI() {
-            participantCount.textContent = participants.size;
-            participantList.innerHTML = '';
-            
-            participants.forEach(id => {
-                const item = document.createElement('div');
-                item.className = id === myId ? 'participant-item current-participant' : 'participant-item';
-                item.textContent = id === myId ? `我 (${id})` : `参与者 (${id})`;
-                participantList.appendChild(item);
-            });
+          participantCount.textContent = members.size;
+          participantList.innerHTML = '';
+          
+          members.forEach(id => {
+            const item = document.createElement('div');
+            item.className = id === myId ? 'participant-item current-participant' : 'participant-item';
+            item.textContent = id === myId ? `我 (${id})` : `参与者 (${id})`;
+            participantList.appendChild(item);
+          });
         }
-
-        // 添加本地视频
+      
         function addLocalVideo() {
-            clearVideos(); // 先清空
-            const container = createVideoContainer('local', '我 (本地)');
-            const video = container.querySelector('video');
-            video.srcObject = myStream;
-            video.muted = true; // 静音本地
-            // 修复：确保视频能自动播放
-            video.play().catch(err => {
-                console.warn('本地视频播放失败:', err);
-                // 尝试用户交互触发播放（备用方案）
-                video.addEventListener('click', () => video.play(), { once: true });
-            });
-            videoGrid.appendChild(container);
+          // 如果已有本地视频，先移除
+          const existing = document.getElementById('local-video');
+          if (existing) existing.remove();
+          
+          const container = document.createElement('div');
+          container.className = 'video-container';
+          container.id = 'local-video';
+          
+          const video = document.createElement('video');
+          video.autoplay = true;
+          video.playsInline = true;
+          video.muted = true;
+          video.srcObject = myStream;
+          
+          const label = document.createElement('div');
+          label.className = 'video-label';
+          label.textContent = '我 (本地)';
+          
+          container.appendChild(video);
+          container.appendChild(label);
+          videoGrid.appendChild(container);
         }
-
-        // 添加远程视频
+      
         function addRemoteVideo(peerId, stream) {
-            // 移除旧的视频元素
-            removeVideoElement(peerId);
-            
-            const container = createVideoContainer(`peer-${peerId}`, `参与者 (${peerId})`);
-            const video = container.querySelector('video');
-            video.srcObject = stream;
-            // 修复：确保远程视频能自动播放
-            video.autoplay = true;
-            video.playsInline = true;
-            video.muted = false;
-            // 强制触发播放
-            video.play().catch(err => {
-                console.warn(`${peerId} 视频播放失败:`, err);
-                // 显示无视频提示
-                const noVideo = document.createElement('div');
-                noVideo.className = 'no-video';
-                noVideo.textContent = '等待视频流...';
-                container.appendChild(noVideo);
-                // 监听轨道添加事件
-                stream.addEventListener('addtrack', () => {
-                    noVideo.remove();
-                    video.play();
-                });
-            });
-            videoGrid.appendChild(container);
+          // 如果已有该远程视频，先移除
+          removeVideoElement(peerId);
+          
+          const container = document.createElement('div');
+          container.className = 'video-container';
+          container.id = `video-${peerId}`;
+          
+          const video = document.createElement('video');
+          video.autoplay = true;
+          video.playsInline = true;
+          video.srcObject = stream;
+          
+          const label = document.createElement('div');
+          label.className = 'video-label';
+          label.textContent = `参与者 (${peerId})`;
+          
+          container.appendChild(video);
+          container.appendChild(label);
+          videoGrid.appendChild(container);
         }
-
-        // 创建视频容器
-        function createVideoContainer(id, labelText) {
-            const container = document.createElement('div');
-            container.className = 'video-container';
-            container.id = id;
-            
-            const video = document.createElement('video');
-            video.autoplay = true;
-            video.playsInline = true;
-            video.width = 300;
-            video.height = 200;
-            
-            const label = document.createElement('div');
-            label.className = 'video-label';
-            label.textContent = labelText;
-            
-            container.appendChild(video);
-            container.appendChild(label);
-            return container;
-        }
-
-        // 移除视频元素
+      
         function removeVideoElement(peerId) {
-            const el = document.getElementById(`peer-${peerId}`);
-            if (el) el.remove();
+          const el = document.getElementById(`video-${peerId}`);
+          if (el) el.remove();
         }
-
-        // 清空所有视频
+      
         function clearVideos() {
-            videoGrid.innerHTML = '';
+          videoGrid.innerHTML = '';
         }
-
-        // 重置所有状态
+      
         function resetState() {
-            isCameraOn = false;
-            isJoined = false;
-            participants.clear(); // 清空参会者集合
-            Object.keys(peers).forEach(id => removePeer(id));
-            clearVideos();
-            
-            startCameraBtn.disabled = true;
-            joinMeetingBtn.disabled = true;
-            leaveMeetingBtn.disabled = true;
-            
-            myIdElement.textContent = '未连接';
-            meetingStatusElement.textContent = '未加入';
-            participantCount.textContent = '0';
-            participantList.innerHTML = '';
-            
-            // 重置首次连接标记
-            isFirstConnect = true;
+          isCameraOn = false;
+          isInMeeting = false;
+          members.clear();
+          
+          if (connectionCheckTimer) {
+            clearTimeout(connectionCheckTimer);
+            connectionCheckTimer = null;
+          }
+          
+          connections.forEach(pc => pc.close());
+          connections.clear();
+          pendingConnections.clear();
+          clearVideos();
+          
+          startCameraBtn.disabled = true;
+          joinMeetingBtn.disabled = true;
+          leaveMeetingBtn.disabled = true;
+          
+          myIdElement.textContent = '未连接';
+          meetingStatusElement.textContent = '未加入';
+          participantCount.textContent = '0';
+          participantList.innerHTML = '';
         }
-
-        // 修复：页面加载完成后请求用户交互权限
+      
+        // 页面加载初始化
         document.addEventListener('DOMContentLoaded', () => {
-            // 监听用户点击，解锁自动播放
-            document.body.addEventListener('click', () => {
-                document.querySelectorAll('video').forEach(video => {
-                    if (video.paused && video.srcObject) {
-                        video.play().catch(err => console.warn('播放失败:', err));
-                    }
-                });
-            }, { once: true });
+          // 自动连接本地服务器
+          setTimeout(() => {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+              connectToServer();
+            }
+          }, 100);
         });
-    </script>
+      </script>
 </body>
 </html>
