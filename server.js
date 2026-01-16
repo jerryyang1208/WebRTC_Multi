@@ -1,166 +1,127 @@
-// server.js - 极简稳定版 WebRTC Mesh 信令服务器
+// server.js - 优化精简版 WebRTC Mesh 信令服务器
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
-const path = require('path');
-const os = require('os');
+const os = require('os'); 
 
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-// 核心存储：所有连接的客户端（ID -> WebSocket实例）
-const clients = new Map();
-// 存储所有参会者ID
-const participants = new Set();
+// 存储连接
+const clients = new Map(); // id -> {ws, isInMeeting}
+const meetingMembers = new Set();
 
-// 生成唯一客户端ID
-function generateClientId() {
-    return Math.random().toString(36).substring(2, 10);
+// 生成短ID
+function generateId() {
+  return Math.random().toString(36).substr(2, 8);
 }
 
-// 广播消息给所有客户端（排除指定客户端）
-function broadcast(message, excludeClient = null) {
-    wss.clients.forEach(client => {
-        if (client !== excludeClient && client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify(message));
-        }
-    });
+// 转发消息（仅转发给会议成员）
+function forwardToMeeting(type, data, excludeId = null) {
+  const message = JSON.stringify({ type, ...data });
+  
+  meetingMembers.forEach(memberId => {
+    if (memberId === excludeId) return;
+    
+    const client = clients.get(memberId);
+    if (client && client.ws.readyState === WebSocket.OPEN) {
+      client.ws.send(message);
+    }
+  });
 }
 
-// 托管静态文件（确保index.html能访问）
-app.use(express.static(path.join(__dirname)));
+// 发送给指定客户端
+function sendToClient(clientId, type, data) {
+  const client = clients.get(clientId);
+  if (client && client.ws.readyState === WebSocket.OPEN) {
+    client.ws.send(JSON.stringify({ type, ...data }));
+  }
+}
+
+// 静态文件
+app.use(express.static(__dirname));
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(__dirname + '/index.html');
 });
 
-// WebSocket 核心逻辑
+// WebSocket连接处理
 wss.on('connection', (ws) => {
-    console.log('✅ 新客户端连接');
-    const clientId = generateClientId();
-    
-    // 1. 存储客户端连接
-    clients.set(clientId, ws);
-    // 新连接默认不加入会议，等待客户端主动加入
-    console.log(`👤 客户端ID: ${clientId}，当前连接数: ${clients.size}`);
-
-    // 2. 给新客户端发送ID
-    ws.send(JSON.stringify({
-        type: 'client-id',
-        id: clientId
-    }));
-
-    // 3. 处理客户端消息
-    ws.on('message', (data) => {
-        try {
-            const msg = JSON.parse(data);
+  const clientId = generateId();
+  console.log(`📱 客户端连接: ${clientId}`);
+  
+  // 存储连接
+  clients.set(clientId, { ws, isInMeeting: false });
+  
+  // 发送ID给客户端
+  sendToClient(clientId, 'id', { id: clientId });
+  
+  // 消息处理
+  ws.on('message', (data) => {
+    try {
+      const msg = JSON.parse(data);
+      
+      switch (msg.type) {
+        case 'join':
+          if (!clients.get(clientId).isInMeeting) {
+            clients.get(clientId).isInMeeting = true;
+            meetingMembers.add(clientId);
             
-            switch (msg.type) {
-                // 前端请求全量参与者列表
-                case 'get-participants':
-                    ws.send(JSON.stringify({
-                        type: 'participants-list',
-                        participants: Array.from(participants)
-                    }));
-                    break;
-                
-                // 加入会议
-                case 'join-meeting':
-                    if (!participants.has(clientId)) {
-                        participants.add(clientId);
-                        // 通知所有人有新成员加入
-                        broadcast({
-                            type: 'user-joined',
-                            id: clientId
-                        });
-                        // 向新加入者发送当前参与者列表
-                        ws.send(JSON.stringify({
-                            type: 'participants-list',
-                            participants: Array.from(participants)
-                        }));
-                    }
-                    break;
-                
-                // 转发P2P Offer
-                case 'offer':
-                    const offerTarget = clients.get(msg.target);
-                    if (offerTarget && offerTarget.readyState === WebSocket.OPEN) {
-                        offerTarget.send(JSON.stringify({
-                            type: 'offer',
-                            from: clientId,
-                            offer: msg.offer
-                        }));
-                    } else {
-                        ws.send(JSON.stringify({
-                            type: 'error',
-                            message: `目标用户 ${msg.target} 不存在或已断开`
-                        }));
-                    }
-                    break;
-                
-                // 转发P2P Answer
-                case 'answer':
-                    const answerTarget = clients.get(msg.target);
-                    if (answerTarget && answerTarget.readyState === WebSocket.OPEN) {
-                        answerTarget.send(JSON.stringify({
-                            type: 'answer',
-                            from: clientId,
-                            answer: msg.answer
-                        }));
-                    } else {
-                        ws.send(JSON.stringify({
-                            type: 'error',
-                            message: `目标用户 ${msg.target} 不存在或已断开`
-                        }));
-                    }
-                    break;
-                
-                // 转发ICE候选
-                case 'ice-candidate':
-                    const iceTarget = clients.get(msg.target);
-                    if (iceTarget && iceTarget.readyState === WebSocket.OPEN) {
-                        iceTarget.send(JSON.stringify({
-                            type: 'ice-candidate',
-                            from: clientId,
-                            candidate: msg.candidate
-                        }));
-                    }
-                    break;
-                
-                // 客户端主动离开
-                case 'leave-meeting':
-                    if (participants.has(clientId)) {
-                        participants.delete(clientId);
-                        broadcast({
-                            type: 'user-left',
-                            id: clientId
-                        });
-                    }
-                    break;
-            }
-        } catch (e) {
-            console.error('❌ 解析消息失败:', e);
-        }
-    });
-
-    // 4. 客户端断开连接处理
-    ws.on('close', () => {
-        console.log(`❌ 客户端 ${clientId} 断开连接`);
-        clients.delete(clientId);
-        if (participants.has(clientId)) {
-            participants.delete(clientId);
-            // 广播用户离开
-            broadcast({
-                type: 'user-left',
-                id: clientId
+            // 通知所有成员有人加入
+            forwardToMeeting('user-join', { id: clientId });
+            
+            // 发送当前成员列表给新加入者
+            sendToClient(clientId, 'members', { 
+              members: Array.from(meetingMembers)
             });
-        }
-    });
-
-    // 5. 错误处理
-    ws.on('error', (err) => {
-        console.error('⚠️ WebSocket错误:', err);
-    });
+            
+            console.log(`✅ ${clientId} 加入会议，当前成员: ${meetingMembers.size}`);
+          }
+          break;
+          
+        case 'leave':
+          if (clients.get(clientId).isInMeeting) {
+            clients.get(clientId).isInMeeting = false;
+            meetingMembers.delete(clientId);
+            
+            // 通知所有成员有人离开
+            forwardToMeeting('user-leave', { id: clientId });
+            console.log(`❌ ${clientId} 离开会议`);
+          }
+          break;
+          
+        case 'signal':
+          // 转发信令消息
+          if (msg.target && clients.has(msg.target)) {
+            sendToClient(msg.target, 'signal', {
+              from: clientId,
+              data: msg.data
+            });
+          }
+          break;
+      }
+    } catch (err) {
+      console.error('消息解析错误:', err);
+    }
+  });
+  
+  // 连接关闭
+  ws.on('close', () => {
+    console.log(`📴 客户端断开: ${clientId}`);
+    
+    // 如果是在会议中，通知其他成员
+    if (clients.get(clientId)?.isInMeeting) {
+      meetingMembers.delete(clientId);
+      forwardToMeeting('user-leave', { id: clientId });
+    }
+    
+    clients.delete(clientId);
+  });
+  
+  // 错误处理
+  ws.on('error', (err) => {
+    console.error(`WebSocket错误 [${clientId}]:`, err);
+  });
 });
 
 // 启动服务器
