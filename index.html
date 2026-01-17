@@ -427,6 +427,7 @@
               pendingConnections.delete(msg.id);
               updateParticipantsUI();
               closeConnection(msg.id);
+              checkConnectionsStatus();
               break;
               
             case 'signal':
@@ -439,34 +440,33 @@
       
         // 检查连接状态
         function checkConnectionsStatus() {
-          const otherMembers = Array.from(members).filter(id => id !== myId);
-          
-          if (otherMembers.length === 0) {
-            updateStatus('✅ 已加入会议（当前只有您一人）', 'success');
+            const otherMembers = Array.from(members).filter(id => id !== myId);
+            
+            if (otherMembers.length === 0) {
+            if (isInMeeting) {
+                updateStatus('✅ 已加入会议（当前只有您一人）', 'success');
+            } else {
+                updateStatus('未加入会议', 'info');
+            }
             return;
-          }
-          
-          // 计算已建立的连接
-          const establishedConnections = otherMembers.filter(id => {
+            }
+            
+            // 计算已建立的连接
+            const establishedConnections = otherMembers.filter(id => {
             const pc = connections.get(id);
             return pc && pc.connectionState === 'connected';
-          });
-          
-          if (establishedConnections.length === otherMembers.length) {
+            });
+            
+            if (establishedConnections.length === otherMembers.length) {
             // 所有连接都建立成功
-            updateStatus(`✅ 会议连接已就绪 (${otherMembers.length}个P2P连接)`, 'success');
-          } else if (establishedConnections.length > 0) {
+            updateStatus(`✅ 已建立所有P2P连接 (${establishedConnections.length}个连接)`, 'success');
+            } else if (establishedConnections.length > 0) {
             // 部分连接成功
             updateStatus(`✅ 已连接 ${establishedConnections.length}/${otherMembers.length} 个参与者`, 'info');
-          } else {
+            } else {
             // 没有连接成功
             updateStatus('⚠️ 正在尝试建立P2P连接...', 'info');
-            
-            // 重新检查
-            connectionCheckTimer = setTimeout(() => {
-              checkConnectionsStatus();
-            }, 2000);
-          }
+            }
         }
       
         // 处理信令消息
@@ -541,10 +541,32 @@
           // 添加本地轨道
           if (myStream) {
             myStream.getTracks().forEach(track => {
-              if (pc.getSenders().some(s => s.track === track)) return;
-              pc.addTrack(track, myStream);
+                if (pc.getSenders().some(s => s.track === track)) return;
+                const sender = pc.addTrack(track, myStream);
+                
+                if (track.kind === 'video' && sender.setParameters) {
+                    try {
+                        const params = sender.getParameters();
+                        
+                        // 如果支持编解码器设置
+                        if (params && params.codecs) {
+                            // 优先选择 VP8，移除其他编解码器
+                            const vp8Codec = params.codecs.find(c => 
+                                c.mimeType.toLowerCase().includes('vp8')
+                            );
+                            
+                            if (vp8Codec) {
+                                params.codecs = [vp8Codec];
+                                sender.setParameters(params);
+                                console.log(`✅ 为 ${peerId} 强制使用 VP8 编解码器`);
+                            }
+                        }
+                    } catch (err) {
+                        console.warn('设置VP8编解码器失败（可能浏览器不支持）:', err);
+                    }
+                }
             });
-          }
+        }
           
           // ICE候选
           pc.onicecandidate = (e) => {
@@ -568,15 +590,23 @@
               // 连接成功，从等待列表中移除
               pendingConnections.delete(peerId);
               updateConnectionStatus();
-            } else if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
-              // 连接失败，尝试重新连接
-              setTimeout(() => {
-                if (isInMeeting && members.has(peerId) && pc.connectionState !== 'connected') {
-                  console.log(`尝试重新连接 ${peerId}...`);
-                  connections.delete(peerId);
-                  createPeerConnection(peerId);
-                }
-              }, 3000);
+            } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+              // 连接断开时也更新状态
+              pendingConnections.delete(peerId);
+              
+              // 立即更新状态
+              setTimeout(() => checkConnectionsStatus(), 100);
+              
+              // 连接失败，尝试重新连接（只有未离开会议才重连）
+              if (pc.connectionState !== 'closed' && isInMeeting && members.has(peerId)) {
+                setTimeout(() => {
+                  if (isInMeeting && members.has(peerId) && (!connections.has(peerId) || connections.get(peerId).connectionState !== 'connected')) {
+                    console.log(`尝试重新连接 ${peerId}...`);
+                    closeConnection(peerId);
+                    createPeerConnection(peerId);
+                  }
+                }, 3000);
+              }
             }
           };
           
@@ -616,14 +646,18 @@
       
         // 关闭连接
         function closeConnection(peerId) {
-          const pc = connections.get(peerId);
-          if (pc) {
-            pc.close();
-            connections.delete(peerId);
+            const pc = connections.get(peerId);
+            if (pc) {
+              // 移除连接状态监听器，避免重复调用
+              pc.onconnectionstatechange = null;
+              pc.close();
+              connections.delete(peerId);
+            }
+            removeVideoElement(peerId);
+            pendingConnections.delete(peerId);
+
+            setTimeout(() => checkConnectionsStatus(), 100);
           }
-          removeVideoElement(peerId);
-          pendingConnections.delete(peerId);
-        }
       
         // 开启/关闭摄像头
         async function toggleCamera() {
@@ -640,11 +674,26 @@
             try {
               const constraints = {
                 video: {
-                  width: { ideal: 640 },
-                  height: { ideal: 480 },
-                  frameRate: { ideal: 20 }
+                  width: { ideal: 1080 },
+                  height: { ideal: 720 },
+                  frameRate: { ideal: 24 }
                 },
-                audio: true
+                audio: {
+                    // 音频优化
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true,
+                    
+                    // 降低音频采样率以减小带宽
+                    sampleRate: 16000,  // 16kHz适合语音
+                    channelCount: 1,    // 单声道
+                    
+                    // 编解码器偏好（如果浏览器支持）
+                    advanced: [
+                        { echoCancellation: true },
+                        { noiseSuppression: true }
+                    ]
+                }
               };
               
               myStream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -678,35 +727,40 @@
       
         // 离开会议
         function leaveMeeting() {
-          isInMeeting = false;
-          joinMeetingBtn.disabled = false;
-          leaveMeetingBtn.disabled = true;
-          meetingStatusElement.textContent = '未加入';
-          
-          // 清理计时器
-          if (connectionCheckTimer) {
+            isInMeeting = false;
+            joinMeetingBtn.disabled = false;
+            leaveMeetingBtn.disabled = true;
+            meetingStatusElement.textContent = '未加入';
+            
+            // 清理计时器
+            if (connectionCheckTimer) {
             clearTimeout(connectionCheckTimer);
             connectionCheckTimer = null;
-          }
-          
-          // 关闭所有连接
-          connections.forEach((pc, id) => {
-            pc.close();
-            removeVideoElement(id);
-          });
-          connections.clear();
-          pendingConnections.clear();
-          
-          // 通知服务器
-          if (ws && ws.readyState === WebSocket.OPEN) {
+            }
+            
+            // 关闭所有连接
+            connections.forEach((pc, id) => {
+            closeConnection(id);
+            });
+            
+            // 清空集合
+            pendingConnections.clear();
+            
+            // 通知服务器
+            if (ws && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: 'leave' }));
-          }
-          
-          updateStatus('👋 已离开会议', 'info');
-          members.clear();
-          updateParticipantsUI();
-        }
-      
+            }
+            
+            updateStatus('👋 已离开会议', 'info');
+            
+            // 🔥 关键：清空成员列表并更新UI
+            members.clear();
+            updateParticipantsUI();
+            
+            // 确保状态正确显示
+            setTimeout(() => checkConnectionsStatus(), 200);
+        }      
+
         // === UI相关函数 ===
         function updateStatus(text, type = 'info') {
           statusBar.textContent = text;
