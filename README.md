@@ -1,2 +1,65 @@
-# WebRTC_Multi
-Real-time multi-user video conference application built with WebRTC mesh network, supporting dynamic participant management and adaptive video display.
+<div align="right">
+  <a href="README_en.md">English</a>
+</div>
+
+# WebRTC Mesh 多人视频会议系统
+一个基于 WebRTC Mesh 架构的去中心化多人视频会议系统，支持实时音视频通信。
+
+## 项目介绍
+这是一个基于 WebRTC 技术 Mesh 架构实现的一对一视频会议应用，使用 WebSocket 作为信令服务器，支持同一局域网内或公网跨局域网的网页端多人（上限四个客户端）实时音视频通信。该项目包含完整的前端页面和后端信令服务器，开箱即用，适合学习和扩展 WebRTC 相关技术。
+
+## 功能特性
+- 🎥 支持多人实时视频会议，采用 Mesh 网络结构，参会者之间建立直接的 P2P 连接
+- 🎤 支持音频和视频流传输与状态同步，实时同步客户端摄像头和麦克风开关状态显示
+- 🔌 WebSocket 信令服务器管理连接，无需中央服务器转发，视频流在参会者之间传输
+- 📱 响应式设计，适配移动端和桌面端，支持现代主流浏览器（Chrome、Edge、Safari）
+- 📊 无论是否在会议内，客户端都能看的实时显示并更新的参会人员列表和用户 ID 等信息
+- 🎯 简洁直观的用户界面，并将 P2P 项目中的黑色背景更新为渐变蓝紫色，优化整体布局
+- 🔄 自动处理 ICE 候选者和 SDP 协商，使用 HTTPS 和 WSS 安全连接，确保会议通信安全
+
+## 技术栈
+### 前端
+- HTML5/CSS3/JavaScript：用户界面
+- WebRTC API：实时音视频通信
+- WebSocket：信令传输
+- MediaStream API：设备媒体访问
+
+### 后端
+- Node.js：服务器运行环境
+- Express：Web服务器
+- ws：WebSocket服务器
+- HTTPS：安全连接通信
+
+## 快速上手
+### 环境要求
+- Node.js 14.0 或更高版本
+- 支持 WebRTC 的现代浏览器
+- 摄像头和麦克风（可选）
+
+### 配置步骤
+- 在终端安装依赖：npm install express ws https fs
+- 生成 SSL 证书：openssl req -nodes -new -x509 -keyout server.key -out server.cert
+- 直接启动服务器：node server.js
+
+### 访问页面
+- 本地访问：根据终端输出，本地客户端打开浏览器访问 https://localhost:8081
+- 局域网内：服务器启动后会显示局域网访问地址，例如 https://192.168.31.93:8081
+- 跨局域网：使用内网穿透工具（如 Ngrok、frp）或部署到云服务器，笔者使用 Ngrok
+
+### 基本操作
+- 先在提示框内输入服务器地址（本地访问、远端设备、跨局域网的地址均由上给出👆）连接服务器。
+- 客户端成功进入该网页后无论有无进入会议都能在“参会人员”区域看到实际进会议的客户端信息。
+- 各端无需打开摄像头/麦克风均可直接“加入会议”，并以“阴影覆盖层+📷摄像头关闭”状态显示。
+- 点击“设备状态”的麦克风右边红色按钮“已关闭”可变为绿色的“已开启”并打开本地音频流输出，同时各客户端的“参会人员”列表客户端 ID 右边会从“静音”红字变为“开麦”绿字。
+- 点击“设备状态”的摄像头右边红色按钮“已关闭”可变为绿色的“已开启”并打开本地视频流输出，同时各客户端的“视频会议”区域看到的该画面输出会从阴影覆盖层变为实时视频流。
+- 点击“离开会议”即可退出会议房间，此时依旧能在“参会人员”区域看到实际进会议的客户端信息。
+
+# 联系咨询
+
+笔者博客 https://www.zhihu.com/people/13-73-62-89-19
+
+本人邮箱：2022280099@email.szu.edu.cn 
+
+本项目会继续完善更新更多新功能与界面交互，欢迎提 issue 分享修改完善建议！
+
+感谢你的关注与青睐！
