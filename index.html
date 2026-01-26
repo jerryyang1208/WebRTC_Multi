@@ -558,32 +558,6 @@
             line-height: 1.6;
         }
         
-        .connection-info {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 16px;
-            margin-top: 25px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .info-item {
-            margin-bottom: 12px;
-            display: flex;
-        }
-        
-        .info-label {
-            font-weight: bold;
-            margin-right: 15px;
-            min-width: 90px;
-            color: rgba(255, 255, 255, 0.9);
-        }
-        
-        .info-value {
-            color: white;
-            font-weight: 500;
-        }
-        
         .empty-state {
             text-align: center;
             padding: 50px 25px;
@@ -760,12 +734,6 @@
             </div>
         </div>
     </div>
-    
-    <div class="connection-info">
-        <div class="info-item"><span class="info-label">我的ID:</span> <span id="myId">未连接</span></div>
-        <div class="info-item"><span class="info-label">会议状态:</span> <span id="meetingStatus">未加入</span></div>
-        <div class="info-item"><span class="info-label">连接状态:</span> <span id="connectionStatus">未连接</span></div>
-    </div>
 
     <script>
         // ==================== 全局变量 ====================
@@ -797,9 +765,6 @@
         const participantCount = document.getElementById('participantCount');
         const participantsList = document.getElementById('participantsList');
         const noParticipantsMessage = document.getElementById('noParticipantsMessage');
-        const myIdElement = document.getElementById('myId');
-        const meetingStatusElement = document.getElementById('meetingStatus');
-        const connectionStatusElement = document.getElementById('connectionStatus');
         const conferenceStatus = document.getElementById('conferenceStatus');
         const conferenceInfo = document.getElementById('conferenceInfo');
         const emptyState = document.getElementById('emptyState');
@@ -864,7 +829,6 @@
             
             ws.onopen = () => {
                 updateStatus('✓ 已连接服务器', 'success');
-                connectionStatusElement.textContent = '已连接';
                 isConnected = true;
                 conferenceStatus.textContent = '已连接服务器';
                 
@@ -892,7 +856,6 @@
             
             ws.onclose = () => {
                 updateStatus('✗ 与服务器断开连接', 'error');
-                connectionStatusElement.textContent = '已断开';
                 isConnected = false;
                 conferenceStatus.textContent = '连接断开';
                 connectBtn.disabled = false;
@@ -913,7 +876,6 @@
             switch (msg.type) {
                 case 'id':
                     myId = msg.id;
-                    myIdElement.textContent = myId;
                     updateParticipantsList();
                     break;
                     
@@ -1629,7 +1591,6 @@
                 isInMeeting = true;
                 joinMeetingBtn.disabled = true;
                 leaveMeetingBtn.disabled = false;
-                meetingStatusElement.textContent = '已加入';
                 conferenceInfo.classList.remove('hidden');
                 
                 if (!members.has(myId)) {
@@ -1660,7 +1621,6 @@
             isInMeeting = false;
             joinMeetingBtn.disabled = false;
             leaveMeetingBtn.disabled = true;
-            meetingStatusElement.textContent = '未加入';
             conferenceInfo.classList.add('hidden');
             
             if (connectionCheckTimer) {
@@ -1965,8 +1925,6 @@
             joinMeetingBtn.disabled = true;
             leaveMeetingBtn.disabled = true;
             
-            myIdElement.textContent = '未连接';
-            meetingStatusElement.textContent = '未加入';
             participantCount.textContent = '0';
             participantsList.innerHTML = '';
             
