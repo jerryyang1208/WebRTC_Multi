@@ -450,112 +450,325 @@
             border: 1px solid rgba(231, 76, 60, 0.4);
         }
         
+        /* ==================== 设备状态区域样式 ==================== */
         .device-status-section {
             background: rgba(255, 255, 255, 0.08);
             border-radius: 12px;
-            padding: 18px;
+            padding: 12px 15px; /* 减少内边距，使其更紧凑 */
             backdrop-filter: blur(5px);
+            margin-bottom: 0;
         }
-        
+
         .device-status-item {
             display: flex;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 10px; /* 减小底部间距 */
+            padding: 8px 0; /* 添加垂直内边距使内容更紧凑 */
         }
-        
+
+        .device-status-item:last-child {
+            margin-bottom: 0; /* 最后一项不加底部间距 */
+        }
+
         .device-status-icon {
-            width: 45px;
-            height: 45px;
+            width: 40px; /* 稍微减小图标容器大小 */
+            height: 40px;
             border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 18px;
-            font-size: 22px;
+            margin-right: 15px; /* 减小右边距 */
+            font-size: 20px; /* 稍微减小图标大小 */
             backdrop-filter: blur(5px);
+            flex-shrink: 0; /* 防止图标被压缩 */
         }
-        
+
         .device-status-icon.camera {
             background: rgba(52, 152, 219, 0.3);
             color: #36D1DC;
             border: 1px solid rgba(52, 152, 219, 0.5);
         }
-        
+
         .device-status-icon.mic {
             background: rgba(46, 204, 113, 0.3);
             color: #2ecc71;
             border: 1px solid rgba(46, 204, 113, 0.5);
         }
-        
+
         .device-status-text {
             flex: 1;
+            min-height: 40px; /* 设置最小高度与图标对齐 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* 垂直居中文本内容 */
         }
-        
+
         .device-status-title {
             font-weight: 500;
-            margin-bottom: 4px;
+            margin-bottom: 2px; /* 减小标题与副标题的间距 */
             color: white;
+            line-height: 1.2; /* 调整行高 */
         }
-        
+
         .device-status-subtitle {
-            font-size: 13px;
+            font-size: 12px; /* 稍微减小字体大小 */
             color: rgba(255, 255, 255, 0.7);
+            line-height: 1.2; /* 调整行高 */
         }
-        
+
         .device-toggle-btn {
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
+            padding: 6px 12px; /* 减小按钮内边距 */
+            border-radius: 15px; /* 稍微减小圆角 */
+            font-size: 13px; /* 减小字体大小 */
             font-weight: 600;
             cursor: pointer;
             border: none;
             transition: all 0.2s ease;
-            min-width: 80px;
+            min-width: 70px; /* 减小最小宽度 */
             text-align: center;
             backdrop-filter: blur(5px);
+            flex-shrink: 0; /* 防止按钮被压缩 */
+            height: 32px; /* 固定高度，与图标高度对齐 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        
+
         .device-toggle-btn:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
-        
+
         .device-toggle-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
-        
+
         .device-toggle-btn.on {
             background: linear-gradient(90deg, #2ecc71, #27ae60);
             color: white;
             border: 1px solid rgba(46, 204, 113, 0.5);
         }
-        
+
         .device-toggle-btn.off {
             background: linear-gradient(90deg, #e74c3c, #c0392b);
             color: white;
             border: 1px solid rgba(231, 76, 60, 0.5);
         }
         
-        .conference-info {
-            background: rgba(52, 152, 219, 0.15);
+        /* 文字聊天区域样式 */
+        .chat-section {
+            margin-top: 0;
+            display: none;
+        }
+        
+        .chat-section.visible {
+            display: block;
+        }
+        
+        .chat-container {
+            background: rgba(255, 255, 255, 0.08);
             border-radius: 12px;
-            padding: 18px;
-            border-left: 4px solid #36D1DC;
-            margin-top: 25px;
+            padding: 15px;
+            backdrop-filter: blur(5px);
+            display: flex;
+            flex-direction: column;
+            height: 380px;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            max-height: 350px;
+            min-height: 200px;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-message {
+            margin-bottom: 8px;
+            width: calc(100% - 20px); /* 填满左右空间，留一点边距 */
+            max-width: 100%; /* 移除最大宽度限制 */
+            word-wrap: break-word;
+            line-height: 1.3;
+            padding: 8px 12px; /* 恢复适当的内边距 */
+            border-radius: 12px;
+            font-size: 14px;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+            min-height: auto;
+            box-sizing: border-box; /* 确保内边距不影响宽度计算 */
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .chat-message.remote {
+            background: rgba(52, 152, 219, 0.25);
+            border: 1px solid rgba(52, 152, 219, 0.4);
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .chat-message.local {
+            background: rgba(46, 204, 113, 0.25);
+            border: 1px solid rgba(46, 204, 113, 0.4);
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+            margin-left: auto;
+        }
+        
+        /* 消息头部容器 - 发送者和时间分别左右对齐 */
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px; /* 增加与内容的间距 */
+            min-height: 20px;
+            width: 100%;
+        }
+        
+        .message-sender {
+            font-size: 12px;
+            font-weight: 600;
+            flex: 1; /* 占据左侧空间 */
+            opacity: 0.9;
+        }
+        
+        .message-sender.remote {
+            color: #5dade2;
+        }
+        
+        .message-sender.local {
+            color: #2ecc71;
+        }
+        
+        /* 时间显示在右侧，与发送者同一高度 */
+        .message-time {
+            font-size: 11px;
+            opacity: 0.7;
+            color: rgba(255, 255, 255, 0.8);
+            text-align: right;
+            white-space: nowrap; /* 防止时间换行 */
+            margin-left: 10px; /* 与发送者之间的间距 */
+        }
+        
+        .message-time.remote {
+            color: #aed6f1;
+        }
+        
+        .message-time.local {
+            color: #abebc6;
+        }
+        
+        .message-content {
+            color: white;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+        
+        .empty-chat {
+            text-align: center;
+            padding: 30px 20px;
+            color: rgba(255, 255, 255, 0.7);
+            font-style: italic;
+        }
+        
+        .empty-chat-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            opacity: 0.5;
+        }
+        
+        .chat-input-container {
+            display: flex;
+            gap: 10px;
+            margin-top: auto;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 14px;
+            outline: none;
             backdrop-filter: blur(5px);
         }
         
-        .conference-info-title {
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: #36D1DC;
+        .chat-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
         }
         
-        .conference-info-description {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.9);
-            line-height: 1.6;
+        .chat-send-btn {
+            padding: 12px 20px; /* 调整宽度使文字不换行 */
+            border-radius: 20px;
+            border: none;
+            background: linear-gradient(90deg, #4776E6, #8E54E9);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(5px);
+            white-space: nowrap; /* 防止文字换行 */
+            min-width: 70px;
+            text-align: center;
+        }
+        
+        .chat-send-btn:hover:not(:disabled) {
+            background: linear-gradient(90deg, #5a86f0, #9a64f5);
+            transform: translateY(-2px);
+        }
+        
+        .chat-send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* 调整侧边栏布局，让聊天区域可以扩展更多空间 */
+        .sidebar {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px; /* 减少内边距 */
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-section {
+            margin-bottom: 20px; /* 统一间距为20px */
+        }
+
+        .sidebar-section:last-child {
+            margin-bottom: 0; /* 最后一个板块不加底部间距 */
+        }
+
+        .participants-list {
+            max-height: 160px; /* 减小高度给聊天区域留更多空间 */
+            overflow-y: auto;
+        }
+        
+        .empty-chat {
+            text-align: center;
+            padding: 40px 20px;
+            color: rgba(255, 255, 255, 0.7);
+            font-style: italic;
+        }
+        
+        .empty-chat-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+            opacity: 0.5;
         }
         
         .empty-state {
@@ -607,11 +820,6 @@
         .browser-warning.show {
             display: block;
             animation: fadeIn 0.3s ease;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
-            to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
         
         /* 滚动条样式 */
@@ -726,10 +934,24 @@
                 </div>
             </div>
             
-            <div id="conferenceInfo" class="conference-info hidden">
-                <div class="conference-info-title">会议信息</div>
-                <div class="conference-info-description">
-                    您当前正在多人视频会议中。所有参会者之间建立了直接的 P2P 连接，无需中央服务器转发视频流。
+            <!-- 文字聊天区域 -->
+            <div id="chatSection" class="sidebar-section chat-section">
+                <div class="sidebar-header">
+                    <span>文字聊天</span>
+                    <span id="chatStatus" class="participants-count">🟢 在线</span>
+                </div>
+                <div class="chat-container">
+                    <div id="chatMessages" class="chat-messages">
+                        <div id="emptyChatMessage" class="empty-chat">
+                            <div class="empty-chat-icon">💬</div>
+                            <div>暂时没有聊天消息</div>
+                            <div style="font-size: 12px; margin-top: 8px;">开始聊天吧！</div>
+                        </div>
+                    </div>
+                    <div class="chat-input-container">
+                        <input type="text" id="chatInput" class="chat-input" placeholder="输入消息..." disabled>
+                        <button id="chatSendBtn" class="chat-send-btn" disabled>发送</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -755,6 +977,9 @@
         let myStateSequence = 0;
         let remoteStreams = new Map();
         
+        // 聊天相关
+        let chatMessages = [];
+        
         // 页面元素
         const connectBtn = document.getElementById('connectBtn');
         const serverUrlInput = document.getElementById('serverUrl');
@@ -766,11 +991,18 @@
         const participantsList = document.getElementById('participantsList');
         const noParticipantsMessage = document.getElementById('noParticipantsMessage');
         const conferenceStatus = document.getElementById('conferenceStatus');
-        const conferenceInfo = document.getElementById('conferenceInfo');
         const emptyState = document.getElementById('emptyState');
         const toggleCameraBtn = document.getElementById('toggleCameraBtn');
         const toggleMicBtn = document.getElementById('toggleMicBtn');
         const browserWarning = document.getElementById('browserWarning');
+        
+        // 聊天元素
+        const chatSection = document.getElementById('chatSection');
+        const chatMessagesContainer = document.getElementById('chatMessages');
+        const emptyChatMessage = document.getElementById('emptyChatMessage');
+        const chatInput = document.getElementById('chatInput');
+        const chatSendBtn = document.getElementById('chatSendBtn');
+        const chatStatus = document.getElementById('chatStatus');
         
         // 检查浏览器兼容性
         let isSecureContext = window.isSecureContext || location.protocol === 'https:' || 
@@ -784,6 +1016,10 @@
             toggleMicBtn.addEventListener('click', toggleMicrophone);
             joinMeetingBtn.addEventListener('click', joinMeeting);
             leaveMeetingBtn.addEventListener('click', leaveMeeting);
+            
+            // 聊天相关事件监听
+            chatInput.addEventListener('keypress', handleChatKeyPress);
+            chatSendBtn.addEventListener('click', sendChatMessage);
             
             checkBrowserCompatibility();
             updateUIState();
@@ -973,6 +1209,12 @@
                         }
                     }
                     break;
+                    
+                case 'chat-message':
+                    if (msg.senderId && msg.message) {
+                        displayChatMessage(msg.senderId, msg.message, msg.timestamp);
+                    }
+                    break;
             }
         }
       
@@ -1067,6 +1309,81 @@
                 }));
                 console.log(`发送设备状态: 摄像头${isCameraOn ? '开启' : '关闭'}, 麦克风${isMicOn ? '开启' : '关闭'}`);
             }
+        }
+        
+        // ==================== 发送聊天消息 ====================
+        function sendChatMessage() {
+            const message = chatInput.value.trim();
+            if (!message || !ws || ws.readyState !== WebSocket.OPEN || !isInMeeting) return;
+            
+            const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            // 发送到服务器
+            ws.send(JSON.stringify({
+                type: 'chat-message',
+                senderId: myId,
+                message: message,
+                timestamp: timestamp
+            }));
+            
+            // 本地显示
+            displayChatMessage(myId, message, timestamp, true);
+            
+            // 清空输入框
+            chatInput.value = '';
+            chatInput.focus();
+        }
+        
+        // ==================== 处理聊天按键事件 ====================
+        function handleChatKeyPress(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendChatMessage();
+            }
+        }
+        
+        // ==================== 显示聊天消息 ====================
+        function displayChatMessage(senderId, message, timestamp, isLocal = false) {
+            // 隐藏空聊天提示
+            if (emptyChatMessage && !emptyChatMessage.classList.contains('hidden')) {
+                emptyChatMessage.classList.add('hidden');
+            }
+            
+            // 创建消息元素
+            const messageElement = document.createElement('div');
+            messageElement.className = `chat-message ${isLocal ? 'local' : 'remote'}`;
+            
+            const senderName = isLocal ? '我' : `用户 ${senderId.substring(0, 6)}`;
+            
+            // 修改HTML结构，将时间放在消息头部右侧，与发送者同一行
+            messageElement.innerHTML = `
+                <div class="message-header">
+                    <div class="message-sender ${isLocal ? 'local' : 'remote'}">${senderName}</div>
+                    <div class="message-time ${isLocal ? 'local' : 'remote'}">${timestamp}</div>
+                </div>
+                <div class="message-content">${escapeHtml(message)}</div>
+            `;
+            
+            // 添加到消息容器
+            chatMessagesContainer.appendChild(messageElement);
+            
+            // 滚动到底部
+            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+            
+            // 添加到消息历史
+            chatMessages.push({
+                senderId: senderId,
+                message: message,
+                timestamp: timestamp,
+                isLocal: isLocal
+            });
+        }
+        
+        // ==================== HTML转义函数 ====================
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
       
         // ==================== 创建对等连接 ====================
@@ -1591,7 +1908,11 @@
                 isInMeeting = true;
                 joinMeetingBtn.disabled = true;
                 leaveMeetingBtn.disabled = false;
-                conferenceInfo.classList.remove('hidden');
+                
+                // 显示聊天区域
+                chatSection.classList.add('visible');
+                chatInput.disabled = false;
+                chatSendBtn.disabled = false;
                 
                 if (!members.has(myId)) {
                     members.add(myId);
@@ -1621,7 +1942,11 @@
             isInMeeting = false;
             joinMeetingBtn.disabled = false;
             leaveMeetingBtn.disabled = true;
-            conferenceInfo.classList.add('hidden');
+            
+            // 隐藏聊天区域
+            chatSection.classList.remove('visible');
+            chatInput.disabled = true;
+            chatSendBtn.disabled = true;
             
             if (connectionCheckTimer) {
                 clearTimeout(connectionCheckTimer);
@@ -1899,6 +2224,7 @@
             stateSequence.clear();
             myStateSequence = 0;
             remoteStreams.clear();
+            chatMessages = [];
             
             if (connectionCheckTimer) {
                 clearTimeout(connectionCheckTimer);
@@ -1924,6 +2250,14 @@
             
             joinMeetingBtn.disabled = true;
             leaveMeetingBtn.disabled = true;
+            
+            // 重置聊天区域
+            chatSection.classList.remove('visible');
+            chatInput.disabled = true;
+            chatSendBtn.disabled = true;
+            chatInput.value = '';
+            chatMessagesContainer.innerHTML = '';
+            emptyChatMessage.classList.remove('hidden');
             
             participantCount.textContent = '0';
             participantsList.innerHTML = '';
