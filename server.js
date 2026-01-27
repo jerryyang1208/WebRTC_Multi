@@ -37,6 +37,19 @@ function forwardToMeeting(type, data, excludeId = null) {
   });
 }
 
+// 广播给所有连接的客户端
+function broadcastToAll(type, data, excludeId = null) {
+  const message = JSON.stringify({ type, ...data });
+  
+  clients.forEach((client, clientId) => {
+    if (clientId === excludeId) return;
+    
+    if (client.ws.readyState === WebSocket.OPEN) {
+      client.ws.send(message);
+    }
+  });
+}
+
 // 发送给指定客户端
 function sendToClient(clientId, type, data) {
   const client = clients.get(clientId);
@@ -140,24 +153,24 @@ wss.on('connection', (ws) => {
                 }, clientId);
             }
             break;
+            
+          case 'chat-message':
+            // 转发聊天消息给会议中的所有成员
+            if (msg.senderId && meetingMembers.has(clientId)) {
+                forwardToMeeting('chat-message', {
+                    senderId: msg.senderId,
+                    message: msg.message,
+                    timestamp: msg.timestamp
+                }, clientId);
+                
+                console.log(`💬 ${clientId}: ${msg.message.substring(0, 50)}${msg.message.length > 50 ? '...' : ''}`);
+            }
+            break;
       }
     } catch (err) {
       console.error('消息解析错误:', err);
     }
   });
-
-  // 添加广播函数
-function broadcastToAll(type, data, excludeId = null) {
-  const message = JSON.stringify({ type, ...data });
-  
-  clients.forEach((client, clientId) => {
-      if (clientId === excludeId) return;
-      
-      if (client.ws.readyState === WebSocket.OPEN) {
-          client.ws.send(message);
-      }
-  });
-}
   
   // 连接关闭
   ws.on('close', () => {
@@ -166,7 +179,10 @@ function broadcastToAll(type, data, excludeId = null) {
     // 如果是在会议中，通知其他成员
     if (clients.get(clientId)?.isInMeeting) {
       meetingMembers.delete(clientId);
-      forwardToMeeting('user-leave', { id: clientId });
+      broadcastToAll('user-leave', { id: clientId });
+      broadcastToAll('members', { 
+        members: Array.from(meetingMembers)
+      });
     }
     
     clients.delete(clientId);
