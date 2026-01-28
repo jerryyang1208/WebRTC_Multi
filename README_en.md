@@ -6,7 +6,7 @@
 A decentralized multi-participant video conference system based on WebRTC Mesh architecture, supporting real-time audio and video communication.
 
 ## Project Introduction
-This is a one-to-one video conference application implemented using WebRTC technology with a Mesh architecture. It uses WebSocket as the signaling server and supports real-time audio-video communication among multiple clients (up to four) on the web, either within the same local network or across different networks over the Internet. The project includes a complete front-end interface and back-end signaling server, ready to use out-of-the-box, making it suitable for learning and extending WebRTC-related technologies.
+This is a one-to-one video conference application implemented using WebRTC technology with a Mesh architecture. It uses WebSocket as the signaling server and supports real-time audio-video communication among multiple clients (up to four) on the web, including words communicating system when meeting, either within the same local network or across different networks over the Internet. The project includes a complete front-end interface and back-end signaling server, ready to use out-of-the-box, making it suitable for learning and extending WebRTC-related technologies.
 
 ## Features
 - 🎥 Supports multi-participant real-time video conferencing using a Mesh network structure, establishing direct P2P connections between participants
@@ -61,5 +61,6 @@ Author's blog: https://www.zhihu.com/people/13-73-62-89-19
 Personal email: 2022280099@email.szu.edu.cn
 
 This project will continue to be improved with more features and interface interactions. Welcome to raise issues and share suggestions for enhancements!
+
 
 Thank you for your attention and interest!
