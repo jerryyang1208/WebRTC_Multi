@@ -166,6 +166,23 @@ wss.on('connection', (ws) => {
                 console.log(`💬 ${clientId}: ${msg.message.substring(0, 50)}${msg.message.length > 50 ? '...' : ''}`);
             }
             break;
+
+          case 'file-message':
+            // 转发文件消息给会议中的所有成员
+            if (msg.senderId && meetingMembers.has(clientId)) {
+                forwardToMeeting('file-message', {
+                    senderId: msg.senderId,
+                    fileId: msg.fileId,
+                    fileName: msg.fileName,
+                    fileType: msg.fileType,
+                    fileSize: msg.fileSize,
+                    fileData: msg.fileData,
+                    timestamp: msg.timestamp || new Date().toISOString()
+                }, clientId);
+                
+                console.log(`📎 ${clientId} 发送文件: ${msg.fileName} (${msg.fileSize} bytes)`);
+            }
+            break;
       }
     } catch (err) {
       console.error('消息解析错误:', err);
