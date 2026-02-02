@@ -569,20 +569,22 @@
         .chat-container {
             background: rgba(255, 255, 255, 0.08);
             border-radius: 12px;
-            padding: 15px;
+            padding: 12px; /* 减小内边距 */
             backdrop-filter: blur(5px);
             display: flex;
             flex-direction: column;
             height: 380px;
+            width: 100%;
+            box-sizing: border-box;
         }
         
         .chat-messages {
             flex: 1;
             overflow-y: auto;
-            margin-bottom: 15px;
+            margin-bottom: 10px; /* 减小底部间距 */
             max-height: 350px;
             min-height: 200px;
-            padding: 10px;
+            padding: 8px; /* 减小内边距 */
             border-radius: 8px;
             background: rgba(0, 0, 0, 0.2);
             display: flex;
@@ -602,6 +604,22 @@
             animation: fadeIn 0.3s ease;
             min-height: auto;
             box-sizing: border-box; /* 确保内边距不影响宽度计算 */
+        }
+
+        .chat-hint {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 8px;
+            padding: 0 5px;
+            line-height: 1.4;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 6px 8px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 100%;
+            box-sizing: border-box;
         }
         
         @keyframes fadeIn {
@@ -686,30 +704,59 @@
             opacity: 0.5;
         }
         
-        .chat-input-container {
-            display: flex;
-            gap: 10px;
-            margin-top: auto;
-        }
-        
-        .chat-input {
-            flex: 1;
-            padding: 12px 16px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            font-size: 14px;
-            outline: none;
-            backdrop-filter: blur(5px);
-        }
-        
         .chat-input::placeholder {
             color: rgba(255, 255, 255, 0.6);
+            font-size: 13px;
         }
-        
+
+        /* 文件预览区域样式 */
+        .file-preview-area {
+            flex: 1;
+            min-width: 0;
+            outline: none; /* 移除默认焦点轮廓 */
+        }
+
+        .file-preview-area:focus {
+            outline: none;
+        }
+
+        .file-preview-content {
+            position: relative;
+            display: flex;
+            align-items: center;
+            padding: 8px 30px 8px 12px;
+            background: rgba(52, 152, 219, 0.2);
+            border: 1px solid rgba(52, 152, 219, 0.4);
+            border-radius: 20px;
+            height: 40px;
+            box-sizing: border-box;
+            overflow: hidden;
+            cursor: default; /* 显示为默认光标 */
+        }
+
+        .file-preview-info {
+            flex: 1;
+            overflow: hidden;
+            padding-right: 25px;
+        }
+
+        .file-preview-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: white;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 2px;
+        }
+
+        .file-preview-size {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
         .chat-send-btn {
-            padding: 12px 20px; /* 调整宽度使文字不换行 */
+            padding: 10px 14px;
             border-radius: 20px;
             border: none;
             background: linear-gradient(90deg, #4776E6, #8E54E9);
@@ -718,19 +765,223 @@
             cursor: pointer;
             transition: all 0.2s ease;
             backdrop-filter: blur(5px);
-            white-space: nowrap; /* 防止文字换行 */
-            min-width: 70px;
+            white-space: nowrap;
+            width: 60px; /* 固定宽度 */
             text-align: center;
+            font-size: 14px;
+            height: 40px;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0; /* 防止被压缩 */
         }
         
         .chat-send-btn:hover:not(:disabled) {
             background: linear-gradient(90deg, #5a86f0, #9a64f5);
-            transform: translateY(-2px);
+            transform: translateY(-1px);
         }
         
         .chat-send-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+        }
+
+        .cancel-file-btn {
+            position: absolute;
+            top: 50%;
+            right: 12px;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .cancel-file-btn:hover {
+            background: #c0392b;
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .cancel-file-btn:active {
+            transform: translateY(-50%) scale(0.9);
+        }
+
+        /* 文件消息样式 */
+        .chat-message.file {
+            background: rgba(155, 89, 182, 0.25);
+            border: 1px solid rgba(155, 89, 182, 0.4);
+        }
+
+        .file-message {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-icon {
+            font-size: 24px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+
+        .file-details {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: white;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 2px;
+        }
+
+        .file-size {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 5px;
+        }
+
+        .download-btn {
+            padding: 6px 12px;
+            background: linear-gradient(90deg, #9b59b6, #8e44ad);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(5px);
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .download-btn:hover {
+            background: linear-gradient(90deg, #af7ac5, #9b59b6);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(155, 89, 182, 0.3);
+        }
+
+        .download-btn:active {
+            transform: translateY(0);
+        }
+
+        /* 文件输入相关样式 */
+        .file-input-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .file-select-btn {
+            padding: 10px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        .file-select-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .file-select-btn:active {
+            transform: translateY(0);
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .file-preview {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.7);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 80px; /* 限制最大宽度 */
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            padding: 4px 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            height: 40px; /* 与按钮对齐 */
+            display: flex;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        /* 调整聊天输入容器布局 */
+        .chat-input-container {
+            display: flex;
+            gap: 6px;
+            margin-top: auto;
+            align-items: center;
+            width: 100%;
+            max-width: 100%; /* 确保不超出容器 */
+            box-sizing: border-box;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 10px 12px; /* 减小左右内边距 */
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 14px;
+            outline: none;
+            backdrop-filter: blur(5px);
+            height: 40px;
+            box-sizing: border-box;
+            min-width: 0; /* 允许缩小 */
         }
         
         /* 调整侧边栏布局，让聊天区域可以扩展更多空间 */
@@ -934,11 +1185,15 @@
                 </div>
             </div>
             
-            <!-- 文字聊天区域 -->
+            <!-- 会议内聊天区域 -->
             <div id="chatSection" class="sidebar-section chat-section">
                 <div class="sidebar-header">
-                    <span>文字聊天</span>
+                    <span>聊天互动</span>
                     <span id="chatStatus" class="participants-count">🟢 在线</span>
+                </div>
+                <div class="chat-hint">
+                    点击📎按钮选择文件（最大10MB）<br>
+                    选择文件后可点击×取消，Enter或点击发送按钮发送
                 </div>
                 <div class="chat-container">
                     <div id="chatMessages" class="chat-messages">
@@ -949,7 +1204,25 @@
                         </div>
                     </div>
                     <div class="chat-input-container">
+                        <div class="file-input-container">
+                            <label for="fileInput" class="file-select-btn" title="选择文件">📎</label>
+                            <input type="file" id="fileInput" style="display: none;">
+                        </div>
+                        
+                        <!-- 文本输入框 -->
                         <input type="text" id="chatInput" class="chat-input" placeholder="输入消息..." disabled>
+                        
+                        <!-- 文件预览区域（默认隐藏） -->
+                        <div id="filePreviewArea" class="file-preview-area" style="display: none;">
+                            <div class="file-preview-content">
+                                <div class="file-preview-info">
+                                    <div class="file-preview-name"></div>
+                                    <div class="file-preview-size"></div>
+                                </div>
+                                <button id="cancelFileBtn" class="cancel-file-btn" title="取消上传">×</button>
+                            </div>
+                        </div>
+                        
                         <button id="chatSendBtn" class="chat-send-btn" disabled>发送</button>
                     </div>
                 </div>
@@ -979,6 +1252,10 @@
         
         // 聊天相关
         let chatMessages = [];
+
+        // 文件传输相关
+        let selectedFile = null;
+        let fileReaders = new Map(); // 存储正在读取的文件
         
         // 页面元素
         const connectBtn = document.getElementById('connectBtn');
@@ -1020,6 +1297,9 @@
             // 聊天相关事件监听
             chatInput.addEventListener('keypress', handleChatKeyPress);
             chatSendBtn.addEventListener('click', sendChatMessage);
+            document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+            document.getElementById('cancelFileBtn').addEventListener('click', cancelFileUpload);
+            document.addEventListener('keydown', handleGlobalKeyDown);
             
             checkBrowserCompatibility();
             updateUIState();
@@ -1030,6 +1310,31 @@
                     connectToServer();
                 }
             }, 100);
+
+            // 修改聊天输入框事件监听
+            chatInput.addEventListener('input', function() {
+                // 只有在没有选择文件时，才根据输入框内容控制发送按钮
+                if (!selectedFile) {
+                    updateSendButtonState();
+                }
+            });
+            
+            // 发送按钮事件监听
+            chatSendBtn.addEventListener('click', sendMessage);
+            
+            // 键盘事件监听
+            chatInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    // 只有在按钮启用时才发送消息
+                    if (!chatSendBtn.disabled) {
+                        sendMessage();
+                    }
+                }
+            });
+            
+            // 初始状态：发送按钮禁用
+            chatSendBtn.disabled = true;
         }
         
         // ==================== 检查浏览器兼容性 ====================
@@ -1215,6 +1520,19 @@
                         displayChatMessage(msg.senderId, msg.message, msg.timestamp);
                     }
                     break;
+
+                case 'file-message':
+                    if (msg.senderId && msg.fileName && msg.fileData) {
+                        displayFileMessage(msg.senderId, {
+                            fileId: msg.fileId,
+                            fileName: msg.fileName,
+                            fileType: msg.fileType,
+                            fileSize: msg.fileSize,
+                            fileData: msg.fileData,
+                            timestamp: msg.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        }, false);
+                    }
+                    break;
             }
         }
       
@@ -1310,6 +1628,32 @@
                 console.log(`发送设备状态: 摄像头${isCameraOn ? '开启' : '关闭'}, 麦克风${isMicOn ? '开启' : '关闭'}`);
             }
         }
+
+        // ==================== 全局键盘事件处理 ====================
+        function handleGlobalKeyDown(e) {
+            // 只有在会议中且焦点不在其他输入框中时，才处理 Enter 键
+            if (!isInMeeting) return;
+            
+            // 检查是否按下了 Enter 键且没有按下 Shift
+            if (e.key === 'Enter' && !e.shiftKey) {
+                // 检查焦点是否在聊天输入框或其他输入框中
+                const activeElement = document.activeElement;
+                const isInInput = activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA';
+                
+                // 如果焦点在其他输入框中（如服务器地址输入框），不处理
+                if (isInInput && activeElement.id !== 'chatInput') {
+                    return;
+                }
+                
+                // 阻止默认行为，避免在文本框中换行
+                e.preventDefault();
+                
+                // 只有在发送按钮启用时才发送消息
+                if (!chatSendBtn.disabled) {
+                    sendMessage();
+                }
+            }
+        }
         
         // ==================== 发送聊天消息 ====================
         function sendChatMessage() {
@@ -1332,13 +1676,23 @@
             // 清空输入框
             chatInput.value = '';
             chatInput.focus();
+
+            // 如果有文件预览，清空它
+            document.getElementById('filePreview').textContent = '';
+            selectedFile = null;
         }
         
         // ==================== 处理聊天按键事件 ====================
         function handleChatKeyPress(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                sendChatMessage();
+                
+                // 如果有选中的文件，发送文件
+                if (selectedFile) {
+                    sendFile();
+                } else {
+                    sendChatMessage();
+                }
             }
         }
         
@@ -1377,6 +1731,290 @@
                 timestamp: timestamp,
                 isLocal: isLocal
             });
+        }
+
+        // ==================== 更新发送按钮状态 ====================
+        function updateSendButtonState() {
+            if (!isInMeeting) {
+                chatSendBtn.disabled = true;
+                return;
+            }
+            
+            // 如果选择了文件，按钮启用
+            if (selectedFile) {
+                chatSendBtn.disabled = false;
+                return;
+            }
+            
+            // 如果没有选择文件，根据输入框内容决定
+            const hasMessage = chatInput.value.trim().length > 0;
+            chatSendBtn.disabled = !hasMessage;
+        }
+
+        // ==================== 处理文件选择 ====================
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // 文件大小限制：10MB
+            const maxSize = 10 * 1024 * 1024;
+            if (file.size > maxSize) {
+                updateStatus('文件大小超过10MB限制', 'error');
+                event.target.value = '';
+                return;
+            }
+            
+            selectedFile = file;
+            
+            // 更新UI：隐藏文本输入框，显示文件预览区域
+            const chatInput = document.getElementById('chatInput');
+            const filePreviewArea = document.getElementById('filePreviewArea');
+            const filePreviewName = filePreviewArea.querySelector('.file-preview-name');
+            const filePreviewSize = filePreviewArea.querySelector('.file-preview-size');
+            
+            chatInput.style.display = 'none';
+            chatInput.value = ''; // 清空文本输入
+            
+            filePreviewName.textContent = file.name;
+            filePreviewSize.textContent = formatFileSize(file.size);
+            filePreviewArea.style.display = 'block';
+
+            // 将焦点设置到文件预览区域，这样可以直接按 Enter 发送
+            filePreviewArea.focus();
+
+            // 更新发送按钮状态
+            updateSendButtonState();
+            
+            updateStatus(`已选择文件: ${file.name} (${formatFileSize(file.size)})`, 'info');
+        }
+        
+        // ==================== 取消文件上传 ====================
+        function cancelFileUpload() {
+            selectedFile = null;
+            
+            // 重置文件输入
+            document.getElementById('fileInput').value = '';
+            
+            // 更新UI：显示文本输入框，隐藏文件预览区域
+            const chatInput = document.getElementById('chatInput');
+            const filePreviewArea = document.getElementById('filePreviewArea');
+            
+            chatInput.style.display = 'block';
+            filePreviewArea.style.display = 'none';
+
+            // 将焦点设置回文本输入框
+            chatInput.focus();
+            
+            // 更新发送按钮状态
+            updateSendButtonState();
+            
+            updateStatus('已取消文件上传', 'info');
+        }
+        
+        // ==================== 发送消息（文本或文件） ====================
+        function sendMessage() {
+            if (!ws || ws.readyState !== WebSocket.OPEN || !isInMeeting) {
+                updateStatus('请先加入会议', 'error');
+                return;
+            }
+            
+            // 如果有选中的文件，发送文件
+            if (selectedFile) {
+                sendFile();
+            } else {
+                // 否则发送文本消息
+                sendTextMessage();
+            }
+        }
+        
+        // ==================== 发送文本消息 ====================
+        function sendTextMessage() {
+            const message = chatInput.value.trim();
+            
+            // 如果消息为空，直接返回而不显示任何提示
+            if (!message) {
+                return;
+            }
+            
+            const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            // 发送到服务器
+            ws.send(JSON.stringify({
+                type: 'chat-message',
+                senderId: myId,
+                message: message,
+                timestamp: timestamp
+            }));
+            
+            // 本地显示
+            displayChatMessage(myId, message, timestamp, true);
+            
+            // 清空输入框并禁用发送按钮
+            chatInput.value = '';
+            chatInput.focus();
+            
+            // 更新发送按钮状态
+            updateSendButtonState();
+            
+            updateStatus('消息已发送', 'success');
+        }
+
+        // ==================== 发送文件 ====================
+        function sendFile() {
+            if (!selectedFile) {
+                return;
+            }
+            
+            const fileId = 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            const reader = new FileReader();
+            
+            // 显示发送中状态
+            chatSendBtn.disabled = true;
+            chatSendBtn.textContent = '发送中...';
+            
+            reader.onload = function(e) {
+                const fileData = {
+                    fileId: fileId,
+                    fileName: selectedFile.name,
+                    fileType: selectedFile.type,
+                    fileSize: selectedFile.size,
+                    fileData: e.target.result,
+                    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                };
+                
+                // 发送到服务器
+                ws.send(JSON.stringify({
+                    type: 'file-message',
+                    senderId: myId,
+                    ...fileData
+                }));
+                
+                // 本地显示
+                displayFileMessage(myId, fileData, true);
+                
+                // 重置UI状态
+                cancelFileUpload();
+                
+                // 恢复发送按钮状态
+                chatSendBtn.textContent = '发送';
+                
+                updateStatus('文件已发送', 'success');
+            };
+            
+            reader.onerror = function() {
+                updateStatus('文件读取失败', 'error');
+                cancelFileUpload();
+                
+                // 恢复发送按钮状态
+                chatSendBtn.textContent = '发送';
+            };
+            
+            reader.readAsDataURL(selectedFile);
+        }
+        
+
+        // ==================== 格式化文件大小 ====================
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // ==================== 显示文件消息 ====================
+        function displayFileMessage(senderId, fileData, isLocal = false) {
+            // 隐藏空聊天提示
+            if (emptyChatMessage && !emptyChatMessage.classList.contains('hidden')) {
+                emptyChatMessage.classList.add('hidden');
+            }
+            
+            const senderName = isLocal ? '我' : `用户 ${senderId.substring(0, 6)}`;
+            
+            // 创建文件消息元素
+            const messageElement = document.createElement('div');
+            messageElement.className = `chat-message file ${isLocal ? 'local' : 'remote'}`;
+            
+            // 获取文件图标
+            function getFileIcon(fileType) {
+                if (fileType.startsWith('image/')) return '🖼️';
+                if (fileType.startsWith('video/')) return '🎬';
+                if (fileType.startsWith('audio/')) return '🎵';
+                if (fileType.includes('pdf')) return '📄';
+                if (fileType.includes('word')) return '📝';
+                if (fileType.includes('excel')) return '📊';
+                if (fileType.includes('zip') || fileType.includes('rar') || fileType.includes('7z')) return '📦';
+                return '📎';
+            }
+            
+            const fileIcon = getFileIcon(fileData.fileType);
+            const fileSize = formatFileSize(fileData.fileSize);
+            
+            messageElement.innerHTML = `
+                <div class="message-header">
+                    <div class="message-sender ${isLocal ? 'local' : 'remote'}">${senderName}</div>
+                    <div class="message-time ${isLocal ? 'local' : 'remote'}">${fileData.timestamp}</div>
+                </div>
+                <div class="file-message">
+                    <div class="file-info">
+                        <div class="file-icon">${fileIcon}</div>
+                        <div class="file-details">
+                            <div class="file-name" title="${fileData.fileName}">${fileData.fileName}</div>
+                            <div class="file-size">${fileSize}</div>
+                        </div>
+                    </div>
+                    <div class="file-actions">
+                        <a href="#" class="download-btn" data-file-id="${fileData.fileId}">下载文件</a>
+                    </div>
+                </div>
+            `;
+            
+            // 添加到消息容器
+            chatMessagesContainer.appendChild(messageElement);
+            
+            // 滚动到底部
+            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+            
+            // 添加下载事件监听器
+            const downloadBtn = messageElement.querySelector('.download-btn');
+            downloadBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                downloadFile(fileData);
+            });
+        }
+
+        // ==================== 下载文件 ====================
+        function downloadFile(fileData) {
+            try {
+                // 从Base64数据中提取实际的数据部分
+                const base64Data = fileData.fileData.split(',')[1] || fileData.fileData;
+                const byteCharacters = atob(base64Data);
+                const byteNumbers = new Array(byteCharacters.length);
+                
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: fileData.fileType });
+                const url = window.URL.createObjectURL(blob);
+                
+                // 创建下载链接
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileData.fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                // 释放URL对象
+                window.URL.revokeObjectURL(url);
+                
+                updateStatus(`正在下载: ${fileData.fileName}`, 'success');
+            } catch (err) {
+                console.error('文件下载失败:', err);
+                updateStatus('文件下载失败', 'error');
+            }
         }
         
         // ==================== HTML转义函数 ====================
@@ -1932,6 +2570,8 @@
                 
                 emptyState.classList.add('hidden');
                 updateParticipantsList();
+
+                updateUIState();
                 
                 console.log(`加入会议，摄像头状态: ${isCameraOn ? '开启' : '关闭'}, 麦克风状态: ${isMicOn ? '开启' : '关闭'}`);
             }
@@ -1981,6 +2621,8 @@
             
             conferenceStatus.textContent = '已连接服务器';
             setTimeout(() => checkConnectionsStatus(), 200);
+
+            updateUIState();
         }
       
         // ==================== 更新状态显示 ====================
@@ -2264,6 +2906,30 @@
             
             emptyState.classList.remove('hidden');
             updateLocalVideoDisplay();
+
+            // 重置聊天相关状态
+            selectedFile = null;
+            chatInput.value = '';
+            chatSendBtn.disabled = true;
+            chatSendBtn.textContent = '发送';
+            
+            // 重置文件预览区域
+            const filePreviewArea = document.getElementById('filePreviewArea');
+            if (filePreviewArea) {
+                filePreviewArea.style.display = 'none';
+            }
+            
+            // 确保文本输入框可见
+            const chatInputElement = document.getElementById('chatInput');
+            if (chatInputElement) {
+                chatInputElement.style.display = 'block';
+            }
+            
+            // 重置文件输入
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput) {
+                fileInput.value = '';
+            }
         }
       
         // ==================== 更新UI状态 ====================
@@ -2286,6 +2952,8 @@
                 toggleMicBtn.textContent = '已关闭';
                 toggleMicBtn.className = 'device-toggle-btn off';
             }
+
+            updateSendButtonState();
         }
       
         // ==================== 页面加载初始化 ====================
