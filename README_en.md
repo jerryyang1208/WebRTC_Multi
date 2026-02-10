@@ -4,6 +4,7 @@
 
 # WebRTC Mesh Multi-Person Video Conferencing System
 A decentralized multi-person video conferencing system based on the WebRTC Mesh architecture, supporting real-time audio and video communication. The front-end page after actual operation is as follows:
+
 ![Program Running Screenshot](pictures/basic.png)
 > *Tips: The initial version V1.0 is displayed on the homepage, subsequent updates are in the release under this repository, and new features can be found at the end of the document or on the blog, which will be continuously optimized~*
 
@@ -48,6 +49,7 @@ This is a web-based multi-person video conferencing application implemented base
 - Local access: According to the terminal output, open the browser on the local client and visit https://localhost:8081
 - Within LAN: After the server starts, it will display the LAN access address, such as https://192.168.31.93:8081
 - Across LANs: Use intranet penetration tools (such as Ngrok, frp) or deploy to a cloud server, the author uses Ngrok
+
 ![Terminal Running Screenshot](pictures/HTTPS.png)
 > *The figure shows the initial log content generated after executing node server.js in the project folder in the terminal, including links for local access and LAN access. For public network access across LANs, please refer to the author's blog sharing.*
 
@@ -61,12 +63,14 @@ This is a web-based multi-person video conferencing application implemented base
 
 ### V2.0 New Chat Interaction Area
 Add an in-room chat interaction area below the "Device Status" area for text interaction among several clients after joining the conference. The expected chat function is implemented based on WebSocket to achieve real-time communication, and chat messages are forwarded through the signaling server instead of P2P connections. This is because text messages have a small data volume, and forwarding through the server is simpler and more reliable without affecting the P2P video connection.
+
 ![Program Running Screenshot](pictures/V2.0_basic.png)
 > *The chat interaction between the four clients in the lower right corner is the newly added text chat area. The local client bubbles are green, and the other remote client bubbles are blue for distinction. At the same time, the user ID and message sending time are displayed on the left and right above the bubbles.*
 
 After implementing the above functions, add the file sending function, transfer files through the signaling server, and send files up to 10MB to each client in the conference for reception. Other clients can click the received file message and download it in their respective browsers for viewing.
 - When no file is selected: Display the file icon button, input message text box, and send button (send text messages).
 - When a file is selected: Hide the input message text box and display the file preview area (including the file name and cancel button).
+
 ![Program Running Screenshot](pictures/V2.0_file_function.png)
 
 The currently implemented conference chat area functions are:
@@ -82,6 +86,7 @@ Currently, the video area can only output the camera video stream picture. We ad
 - In camera mode: Use microphone audio (if the microphone is turned on).
 - When the microphone is switched on/off: Only control the microphone audio track, without affecting the screen sharing audio.
 The final implemented UI layout effect is as follows:
+
 ![Program Running Screenshot](pictures/V3.0_UI.png)
 At the same time, to adapt to viewing the picture during screen sharing, a video double-click zoom function is added. That is, double-click any participant's video picture in the video conference to zoom it to full screen proportionally, and double-click again, click the close button, or press Esc to restore the original size, thereby greatly improving the conference experience.
 
@@ -94,3 +99,4 @@ Author's Email: 2022280099@email.szu.edu.cn
 This project will continue to be improved and updated with more new functions and interface interactions. Welcome to raise issues to share suggestions for modification and improvement!
 
 Thank you for your attention and support!
+
