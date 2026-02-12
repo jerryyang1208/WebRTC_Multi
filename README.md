@@ -103,7 +103,7 @@
 - 平均网络延迟：xx ms
 - 平均系统丢包率：xx%
 
-![程序运行截图](pictures/V4.0_Whloe.webp)
+![程序运行截图](pictures/V4.0_Whole.webp)
 
 # 联系咨询
 
