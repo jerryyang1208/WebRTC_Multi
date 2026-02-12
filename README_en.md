@@ -90,6 +90,23 @@ The final implemented UI layout effect is as follows:
 ![Program Running Screenshot](pictures/V3.0_UI.png)
 At the same time, to adapt to viewing the picture during screen sharing, a video double-click zoom function is added. That is, double-click any participant's video picture in the video conference to zoom it to full screen proportionally, and double-click again, click the close button, or press Esc to restore the original size, thereby greatly improving the conference experience.
 
+### V4.0 New Performance Monitoring Panel
+Through a series of optimizations including intelligent signaling scheduling, refined ICE handling, adaptive reconnection strategies, real-time performance monitoring, and keep-alive mechanisms, the initial connection success rate has been significantly improved, making the entire Mesh network more robust and stable in complex network environments.
+
+At the same time, a performance detection module has been added. For each remote participant in the meeting, you can view the latency, packet loss, and resolution of the corresponding P2P connection in the upper right corner of their video feed. Clicking on the performance panel will completely hide and make it transparent; clicking the same area again will restore the panel.
+
+![Program Running Screenshot](pictures/V4.0_Panels.webp)
+
+After all clients have exited the meeting normally, the terminal log will output the overall connection success rate, average network latency, and average system packet loss rate for the conference session at the end.
+
+The output format is as follows:
+- All users have left the meeting. Performance monitoring analysis is as follows:
+- Connection success rate: xx%
+- Average network latency: xx ms
+- Average system packet loss rate: xx%
+
+![Program Running Screenshot](pictures/V4.0_Whole.webp)
+
 # Contact & Consultation
 
 Author's Blog https://www.zhihu.com/people/13-73-62-89-19
@@ -99,4 +116,5 @@ Author's Email: 2022280099@email.szu.edu.cn
 This project will continue to be improved and updated with more new functions and interface interactions. Welcome to raise issues to share suggestions for modification and improvement!
 
 Thank you for your attention and support!
+
 
