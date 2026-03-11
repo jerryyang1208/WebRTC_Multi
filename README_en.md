@@ -14,13 +14,11 @@
 
 </div>
 
-A decentralized multi-person video conferencing system based on the WebRTC Mesh architecture, supporting real-time audio and video communication. The front-end page after actual operation is as follows:
+## Project Introduction
+This is a web-based multi-person video conferencing application implemented based on WebRTC technology and Mesh architecture, using WebSocket as the signaling server. It supports real-time audio and video communication among multiple clients (up to four clients) on the same local area network (LAN) or across LANs over the public network. The project includes complete front-end functional pages and a back-end signaling server, ready to use out of the box, suitable for learning and expanding WebRTC-related technologies. The front-end page after actual operation is as follows:
+
 ![Program Running Screenshot](pictures/basic.png)
 > *Tips: The initial version V1.0 is displayed on the homepage, subsequent updates are in the release under this repository, and new features can be found at the end of the document or on the blog, which will be continuously optimized~*
-
-
-## Project Introduction
-This is a web-based multi-person video conferencing application implemented based on WebRTC technology and Mesh architecture, using WebSocket as the signaling server. It supports real-time audio and video communication among multiple clients (up to four clients) on the same local area network (LAN) or across LANs over the public network. The project includes complete front-end functional pages and a back-end signaling server, ready to use out of the box, suitable for learning and expanding WebRTC-related technologies.
 
 ## Functional Features
 - 🎥 Supports multi-person real-time video conferencing with a Mesh network structure, where participants establish direct P2P connections
@@ -105,3 +103,4 @@ Author's Email: 2022280099@email.szu.edu.cn
 This project will continue to be improved and updated with more new functions and interface interactions. Welcome to raise issues to share suggestions for modification and improvement!
 
 Thank you for your attention and support!
+
