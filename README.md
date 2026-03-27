@@ -1,4 +1,4 @@
-<div align="right">
+<img width="2958" height="650" alt="image" src="https://github.com/user-attachments/assets/2e8c2ac8-d254-4299-9469-23b68cb0965f" /><div align="right">
   <a href="README_en.md">English</a>
 </div>
 
@@ -119,6 +119,9 @@
 
 ![程序运行截图](pictures/V4.0_Log.png)
 
+之后又继续引入 Perfect Negotiation 信令协商机制 + 指数退避重试，解决多人同时加入时的 Offer/Answer 冲突问题，提升连接成功率，然后还优化了音视频质量：
+- 音频层优化 Opus 编码（FEC/DTX/码率限制）并设置高优先级传输，弱网环境下保证语音流畅。
+- 视频层根据场景（屏幕共享/摄像头）动态调整码率与帧率，避免带宽抢占。
 
 # 联系咨询
 
