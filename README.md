@@ -1,4 +1,4 @@
-<img width="2958" height="650" alt="image" src="https://github.com/user-attachments/assets/2e8c2ac8-d254-4299-9469-23b68cb0965f" /><div align="right">
+<div align="right">
   <a href="README_en.md">English</a>
 </div>
 
