@@ -94,6 +94,32 @@ The final implemented UI layout effect is as follows:
 ![Program Running Screenshot](pictures/V3.0_UI.png)
 At the same time, to adapt to viewing the picture during screen sharing, a video double-click zoom function is added. That is, double-click any participant's video picture in the video conference to zoom it to full screen proportionally, and double-click again, click the close button, or press Esc to restore the original size, thereby greatly improving the conference experience.
 
+### V4.0 Major Performance and Stability Optimizations
+The current network P2P connections and cross-LAN communications are often unstable, making it difficult to achieve complete synchronization of video feeds and information across four clients. Therefore, various aspects need optimization:
+
+- **Offer/Answer Conflict Resolution**: Introduced a polite mechanism that determines the "polite party" based on ID sorting. When both sides send offers simultaneously, the polite party abandons its own offer and accepts the other's, preventing connection failures caused by signaling race conditions and improving connection success rates, especially in scenarios where multiple users join simultaneously.
+- **Connection Timeout and Retry Strategy**: Dynamic timeout with exponential backoff based on attempt count (up to 10 seconds), with a maximum of 3 retries and increasing retry intervals to avoid network pressure from frequent retries while allowing more recovery opportunities for network fluctuations; for connection failures, wait for ICE state changes first and initiate ICE restart when necessary, enabling rapid connection re-establishment during network switching.
+- **WebSocket Reconnection State Cleanup**: Thoroughly cleans all P2P connections, remote video containers, member sets, and pendingCandidates associated with old IDs, preventing "ghost" video containers or invalid connections after reconnection, ensuring the interface and state are completely reset when rejoining a meeting and avoiding resource leaks.
+
+- **Automatic Synchronization of Video Containers and Member Lists**: Added the `validateAndSyncState()` function, which checks DOM and member list consistency every 10 seconds, automatically creating missing containers, removing redundant containers, and repairing broken P2P connections. This automatically repairs interface and connection states even during network fluctuations or signaling loss, significantly improving system robustness.
+- **Performance Monitoring (Stats) Enhancements**: Added real-time bitrate (kbps), uses more precise nominated candidate-pair for RTT calculation, distinguishes whether video streams have data to avoid invalid statistics; bitrate is calculated by the byte difference between two getStats calls; provides a more comprehensive network quality view, facilitating debugging and user experience optimization.
+- **Server-Side QoS Summary Mechanism Optimization**: Added the `scheduleSummary` function, which delays summary output by 2 seconds after all members leave, using `pendingSummaryTimer` to prevent duplicate output, ensuring sendBeacon reports have time to reach the server and avoid data loss. Clients report performance data via WebSocket every 5 seconds, supporting complete quality analysis after meetings end.
+- **Granular Connection State Handling**: Processes different states of `iceConnectionState` (connected, failed, disconnected, checking) separately; waits 5 seconds for automatic recovery in disconnected state, then initiates ICE restart if not recovered; triggers exponential backoff retry for failed state to avoid resource waste from blind reconnection.
+- **Renegotiation Debounce Optimization**: Added 200ms debounce delay for the `onnegotiationneeded` event, preventing frequent renegotiation triggers (e.g., when adding multiple tracks simultaneously), reducing signaling storm risks and improving connection stability.
+- **Signaling Processing Idempotency Guarantee**: Added signal deduplication cache (5-second TTL) to prevent duplicate signals from being processed multiple times.
+- **ICE Candidate Processing Optimization**: Caches candidates when remoteDescription is not set and adds them uniformly after setting, preventing candidate loss due to timing issues.
+- **Local Video Container Auto-Cleanup**: Automatically removes old local video containers when myId changes, preventing multiple local client video feeds from appearing on the interface.
+- **Device Status Synchronization Optimization**: Actively sends current device status after successful connection establishment, ensuring new members can immediately see existing members' camera/microphone status.
+
+- **Error Recovery Mechanism**: Captures `InvalidStateError` and proactively closes abnormal connections with delayed rebuild, preventing permanent connection failures from single errors.
+- **Resource Cleanup Completeness**: Fully stops and cleans all media tracks (screenStream, microphoneAudioTrack, etc.) when leaving meetings, avoiding device occupation and memory leaks.
+
+![Program Running Screenshot](pictures/V4.0_Log.png)
+
+Subsequently, the Perfect Negotiation signaling mechanism combined with exponential backoff retry was introduced to resolve Offer/Answer conflict issues when multiple users join simultaneously, improving connection success rates. Additionally, audio and video quality optimizations were implemented:
+- **Audio Layer Optimization**: Opus encoding optimization (FEC/DTX/bitrate limiting) with high-priority transmission set, ensuring smooth voice communication in weak network environments.
+- **Video Layer Optimization**: Dynamically adjusts bitrate and frame rate based on scenarios (screen sharing/camera) to avoid bandwidth contention.
+
 # Contact & Consultation
 
 Author's Blog https://www.zhihu.com/people/13-73-62-89-19
