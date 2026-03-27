@@ -122,6 +122,8 @@ The current network P2P connections and cross-LAN communications are often unsta
 
 ![Program Running Screenshot](pictures/V4.0_Log.png)
 
+> *BTW due to my personal computer's process's problem, I change the port to 8888, you could choose and change it as you like, too。*
+
 Subsequently, the Perfect Negotiation signaling mechanism combined with exponential backoff retry was introduced to resolve Offer/Answer conflict issues when multiple users join simultaneously, improving connection success rates. Additionally, audio and video quality optimizations were implemented:
 - **Audio Layer Optimization**: Opus encoding optimization (FEC/DTX/bitrate limiting) with high-priority transmission set, ensuring smooth voice communication in weak network environments.
 - **Video Layer Optimization**: Dynamically adjusts bitrate and frame rate based on scenarios (screen sharing/camera) to avoid bandwidth contention.
