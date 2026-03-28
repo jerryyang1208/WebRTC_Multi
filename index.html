@@ -244,6 +244,111 @@
             color: white;
         }
         
+        /* 修改：右侧容器样式 */
+        .video-section-header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        /* 修改：视频输出源按钮样式 */
+        .video-output-switcher {
+            position: relative;
+        }
+        
+        .video-output-btn {
+            padding: 8px 16px;
+            background: linear-gradient(90deg, #9b59b6, #8e44ad);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(5px);
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        
+        .video-output-btn:hover:not(:disabled) {
+            background: linear-gradient(90deg, #af7ac5, #9b59b6);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(155, 89, 182, 0.3);
+        }
+        
+        .video-output-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .video-output-icon {
+            font-size: 16px;
+        }
+        
+        .video-output-text {
+            white-space: nowrap;
+        }
+        
+        /* 视频输出切换弹窗样式 */
+        .video-output-popup {
+            position: absolute;
+            right: 100%;
+            top: 50%;
+            transform: translateY(-50%); 
+            margin-right: 10px; /* 按钮与弹窗之间的间距 */
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 12px;
+            z-index: 100;
+            min-width: 180px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .video-output-popup.show {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .video-output-option {
+            padding: 12px 16px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+        }
+        
+        .video-output-option:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .video-output-option.active {
+            background: rgba(155, 89, 182, 0.3);
+            border-color: rgba(155, 89, 182, 0.4);
+        }
+        
+        .video-output-option-icon {
+            font-size: 18px;
+        }
+        
+        .video-output-option-text {
+            flex: 1;
+        }
+        
         .video-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -283,6 +388,119 @@
             object-fit: cover;
             background-color: #000;
             z-index: 1;
+        }
+
+        /* 双击放大功能相关样式 */
+        .video-container.zoomed {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 1000 !important;
+            margin: 0 !important;
+            padding: 20px !important;
+            background-color: rgba(0, 0, 0, 0.9) !important;
+            border: none !important;
+            box-shadow: none !important;
+            transform: none !important;
+            aspect-ratio: auto !important;
+            max-width: none !important;
+            max-height: none !important;
+        }
+
+        .video-container.zoomed video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain !important;
+            border-radius: 12px !important;
+            background-color: #000 !important;
+        }
+
+        .video-container.zoomed .camera-off-overlay {
+            width: 100% !important;
+            height: 100% !important;
+            border-radius: 12px !important;
+        }
+
+        .video-container.zoomed .video-label {
+            font-size: 18px !important;
+            padding: 12px 24px !important;
+            bottom: 30px !important;
+            left: 30px !important;
+            background: rgba(0, 0, 0, 0.8) !important;
+            backdrop-filter: blur(10px) !important;
+        }
+
+        .video-container.zoomed.local .video-label {
+            background: rgba(54, 209, 220, 0.9) !important;
+        }
+
+        /* 放大状态下的关闭按钮 */
+        .zoom-close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .zoom-close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .video-container.zoomed .zoom-close-btn {
+            display: flex;
+        }
+
+        /* 当有视频放大时，添加蒙层到其他元素 */
+        .video-grid.has-zoomed::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            backdrop-filter: blur(5px);
+            opacity: 0;
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* 放大动画 */
+        @keyframes zoomIn {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .video-container.zoomed {
+            animation: zoomIn 0.3s ease forwards;
         }
         
         .camera-off-overlay {
@@ -450,112 +668,579 @@
             border: 1px solid rgba(231, 76, 60, 0.4);
         }
         
+        /* ==================== 设备状态区域样式 ==================== */
         .device-status-section {
             background: rgba(255, 255, 255, 0.08);
             border-radius: 12px;
-            padding: 18px;
+            padding: 12px 15px; /* 减少内边距，使其更紧凑 */
             backdrop-filter: blur(5px);
+            margin-bottom: 0;
         }
-        
+
         .device-status-item {
             display: flex;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 10px; /* 减小底部间距 */
+            padding: 8px 0; /* 添加垂直内边距使内容更紧凑 */
         }
-        
+
+        .device-status-item:last-child {
+            margin-bottom: 0; /* 最后一项不加底部间距 */
+        }
+
         .device-status-icon {
-            width: 45px;
-            height: 45px;
+            width: 40px; /* 稍微减小图标容器大小 */
+            height: 40px;
             border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 18px;
-            font-size: 22px;
+            margin-right: 15px; /* 减小右边距 */
+            font-size: 20px; /* 稍微减小图标大小 */
             backdrop-filter: blur(5px);
+            flex-shrink: 0; /* 防止图标被压缩 */
         }
-        
+
         .device-status-icon.camera {
             background: rgba(52, 152, 219, 0.3);
             color: #36D1DC;
             border: 1px solid rgba(52, 152, 219, 0.5);
         }
-        
+
         .device-status-icon.mic {
             background: rgba(46, 204, 113, 0.3);
             color: #2ecc71;
             border: 1px solid rgba(46, 204, 113, 0.5);
         }
         
+        /* 移除视频输出切换图标样式 */
+
         .device-status-text {
             flex: 1;
+            min-height: 40px; /* 设置最小高度与图标对齐 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* 垂直居中文本内容 */
         }
-        
+
         .device-status-title {
             font-weight: 500;
-            margin-bottom: 4px;
+            margin-bottom: 2px; /* 减小标题与副标题的间距 */
             color: white;
+            line-height: 1.2; /* 调整行高 */
         }
-        
+
         .device-status-subtitle {
-            font-size: 13px;
+            font-size: 12px; /* 稍微减小字体大小 */
             color: rgba(255, 255, 255, 0.7);
+            line-height: 1.2; /* 调整行高 */
         }
-        
+
         .device-toggle-btn {
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
+            padding: 6px 12px; /* 减小按钮内边距 */
+            border-radius: 15px; /* 稍微减小圆角 */
+            font-size: 13px; /* 减小字体大小 */
             font-weight: 600;
             cursor: pointer;
             border: none;
             transition: all 0.2s ease;
-            min-width: 80px;
+            min-width: 70px; /* 减小最小宽度 */
             text-align: center;
             backdrop-filter: blur(5px);
+            flex-shrink: 0; /* 防止按钮被压缩 */
+            height: 32px; /* 固定高度，与图标高度对齐 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        
+
         .device-toggle-btn:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
-        
+
         .device-toggle-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
-        
+
         .device-toggle-btn.on {
             background: linear-gradient(90deg, #2ecc71, #27ae60);
             color: white;
             border: 1px solid rgba(46, 204, 113, 0.5);
         }
-        
+
         .device-toggle-btn.off {
             background: linear-gradient(90deg, #e74c3c, #c0392b);
             color: white;
             border: 1px solid rgba(231, 76, 60, 0.5);
         }
         
-        .conference-info {
-            background: rgba(52, 152, 219, 0.15);
+        /* 文字聊天区域样式 */
+        .chat-section {
+            margin-top: 0;
+            display: none;
+        }
+        
+        .chat-section.visible {
+            display: block;
+        }
+        
+        .chat-container {
+            background: rgba(255, 255, 255, 0.08);
             border-radius: 12px;
-            padding: 18px;
-            border-left: 4px solid #36D1DC;
-            margin-top: 25px;
+            padding: 12px;
             backdrop-filter: blur(5px);
+            display: flex;
+            flex-direction: column;
+            height: 380px;
+            width: 100%;
+            box-sizing: border-box;
+            contain: content; /* 优化：使用 contain 减少重排开销，对手机性能有帮助 */
         }
         
-        .conference-info-title {
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: #36D1DC;
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 10px; /* 减小底部间距 */
+            max-height: 350px;
+            min-height: 200px;
+            padding: 8px; /* 减小内边距 */
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
         }
         
-        .conference-info-description {
+        .chat-message {
+            margin-bottom: 8px;
+            width: calc(100% - 20px); /* 填满左右空间，留一点边距 */
+            max-width: 100%; /* 移除最大宽度限制 */
+            word-wrap: break-word;
+            line-height: 1.3;
+            padding: 8px 12px; /* 恢复适当的内边距 */
+            border-radius: 12px;
             font-size: 14px;
-            color: rgba(255, 255, 255, 0.9);
-            line-height: 1.6;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+            min-height: auto;
+            box-sizing: border-box; /* 确保内边距不影响宽度计算 */
+        }
+
+        .chat-hint {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 8px;
+            padding: 0 5px;
+            line-height: 1.4;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 6px 8px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .chat-message.remote {
+            background: rgba(52, 152, 219, 0.25);
+            border: 1px solid rgba(52, 152, 219, 0.4);
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .chat-message.local {
+            background: rgba(46, 204, 113, 0.25);
+            border: 1px solid rgba(46, 204, 113, 0.4);
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+            margin-left: auto;
+        }
+        
+        /* 消息头部容器 - 发送者和时间分别左右对齐 */
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px; /* 增加与内容的间距 */
+            min-height: 20px;
+            width: 100%;
+        }
+        
+        .message-sender {
+            font-size: 12px;
+            font-weight: 600;
+            flex: 1; /* 占据左侧空间 */
+            opacity: 0.9;
+        }
+        
+        .message-sender.remote {
+            color: #5dade2;
+        }
+        
+        .message-sender.local {
+            color: #2ecc71;
+        }
+        
+        /* 时间显示在右侧，与发送者同一高度 */
+        .message-time {
+            font-size: 11px;
+            opacity: 0.7;
+            color: rgba(255, 255, 255, 0.8);
+            text-align: right;
+            white-space: nowrap; /* 防止时间换行 */
+            margin-left: 10px; /* 与发送者之间的间距 */
+        }
+        
+        .message-time.remote {
+            color: #aed6f1;
+        }
+        
+        .message-time.local {
+            color: #abebc6;
+        }
+        
+        .message-content {
+            color: white;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+        
+        .empty-chat {
+            text-align: center;
+            padding: 30px 20px;
+            color: rgba(255, 255, 255, 0.7);
+            font-style: italic;
+        }
+        
+        .empty-chat-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            opacity: 0.5;
+        }
+        
+        .chat-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 13px;
+        }
+
+        /* 文件预览区域样式 */
+        .file-preview-area {
+            flex: 1;
+            min-width: 0;
+            outline: none; /* 移除默认焦点轮廓 */
+        }
+
+        .file-preview-area:focus {
+            outline: none;
+        }
+
+        .file-preview-content {
+            position: relative;
+            display: flex;
+            align-items: center;
+            padding: 8px 30px 8px 12px;
+            background: rgba(52, 152, 219, 0.2);
+            border: 1px solid rgba(52, 152, 219, 0.4);
+            border-radius: 20px;
+            height: 40px;
+            box-sizing: border-box;
+            overflow: hidden;
+            cursor: default; /* 显示为默认光标 */
+        }
+
+        .file-preview-info {
+            flex: 1;
+            overflow: hidden;
+            padding-right: 25px;
+        }
+
+        .file-preview-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: white;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 2px;
+        }
+
+        .file-preview-size {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .chat-send-btn {
+            padding: 10px 14px;
+            border-radius: 20px;
+            border: none;
+            background: linear-gradient(90deg, #4776E6, #8E54E9);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(5px);
+            white-space: nowrap;
+            width: 60px; /* 固定宽度 */
+            text-align: center;
+            font-size: 14px;
+            height: 40px;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0; /* 防止被压缩 */
+        }
+        
+        .chat-send-btn:hover:not(:disabled) {
+            background: linear-gradient(90deg, #5a86f0, #9a64f5);
+            transform: translateY(-1px);
+        }
+        
+        .chat-send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .cancel-file-btn {
+            position: absolute;
+            top: 50%;
+            right: 12px;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .cancel-file-btn:hover {
+            background: #c0392b;
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .cancel-file-btn:active {
+            transform: translateY(-50%) scale(0.9);
+        }
+
+        /* 文件消息样式 */
+        .chat-message.file {
+            background: rgba(155, 89, 182, 0.25);
+            border: 1px solid rgba(155, 89, 182, 0.4);
+        }
+
+        .file-message {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-icon {
+            font-size: 24px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+
+        .file-details {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: white;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 2px;
+        }
+
+        .file-size {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 5px;
+        }
+
+        .download-btn {
+            padding: 6px 12px;
+            background: linear-gradient(90deg, #9b59b6, #8e44ad);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(5px);
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .download-btn:hover {
+            background: linear-gradient(90deg, #af7ac5, #9b59b6);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(155, 89, 182, 0.3);
+        }
+
+        .download-btn:active {
+            transform: translateY(0);
+        }
+
+        /* 文件输入相关样式 */
+        .file-input-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .file-select-btn {
+            padding: 10px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        .file-select-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .file-select-btn:active {
+            transform: translateY(0);
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .file-preview {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.7);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 80px; /* 限制最大宽度 */
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            padding: 4px 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            height: 40px; /* 与按钮对齐 */
+            display: flex;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        /* 调整聊天输入容器布局 */
+        .chat-input-container {
+            display: flex;
+            gap: 6px;
+            margin-top: auto;
+            align-items: center;
+            width: 100%;
+            max-width: 100%; /* 确保不超出容器 */
+            box-sizing: border-box;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 10px 12px; /* 减小左右内边距 */
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 14px;
+            outline: none;
+            backdrop-filter: blur(5px);
+            height: 40px;
+            box-sizing: border-box;
+            min-width: 0; /* 允许缩小 */
+        }
+        
+        /* 调整侧边栏布局，让聊天区域可以扩展更多空间 */
+        .sidebar {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px; /* 减少内边距 */
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-section {
+            margin-bottom: 20px; /* 统一间距为20px */
+        }
+
+        .sidebar-section:last-child {
+            margin-bottom: 0; /* 最后一个板块不加底部间距 */
+        }
+
+        .participants-list {
+            max-height: 160px; /* 减小高度给聊天区域留更多空间 */
+            overflow-y: auto;
+        }
+        
+        .empty-chat {
+            text-align: center;
+            padding: 40px 20px;
+            color: rgba(255, 255, 255, 0.7);
+            font-style: italic;
+        }
+        
+        .empty-chat-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+            opacity: 0.5;
         }
         
         .empty-state {
@@ -609,11 +1294,6 @@
             animation: fadeIn 0.3s ease;
         }
         
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
-            to { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
-        
         /* 滚动条样式 */
         ::-webkit-scrollbar {
             width: 8px;
@@ -632,6 +1312,32 @@
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(52, 152, 219, 0.7);
         }
+
+        /* 性能指标浮层 */
+        .stats-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            color: #00ff00;
+            font-family: monospace;
+            font-size: 10px;
+            padding: 5px;
+            border-radius: 4px;
+            z-index: 5;
+            pointer-events: auto;    /* 👈 关键修改：允许点击 */
+            line-height: 1.4;
+            text-align: left;
+        }
+        .stats-warning { color: #ffff00; } /* 黄色警告 */
+        .stats-danger { color: #ff0000; }  /* 红色危险 */
+
+        /* 性能面板点击透明效果（完全透明，仍可点击） */
+        .stats-overlay.transparent {
+            opacity: 0 !important;
+            transition: opacity 0.15s ease;
+        }
+
     </style>
 </head>
 <body>
@@ -644,7 +1350,7 @@
     </div>
     
     <div class="server-url">
-        <input type="text" id="serverUrl" class="url-input" value="wss://localhost:8081" placeholder="请输入WebSocket服务器地址">
+        <input type="text" id="serverUrl" class="url-input" value="wss://localhost:8888" placeholder="请输入WebSocket服务器地址">
         <button id="connectBtn" class="connect-btn">连接服务器</button>
     </div>
     
@@ -676,7 +1382,27 @@
         <div class="video-section">
             <div class="video-section-header">
                 <div class="video-section-title">视频会议</div>
-                <div id="conferenceStatus" class="participants-count">未连接</div>
+                <div class="video-section-header-right">
+                    <!-- 修改：视频输出切换按钮和弹窗 -->
+                    <div class="video-output-switcher">
+                        <button id="toggleVideoOutputBtn" class="video-output-btn" disabled>
+                            <span class="video-output-icon">📷</span>
+                            <span class="video-output-text">视频输出源切换</span>
+                        </button>
+                        <!-- 视频输出切换弹窗 -->
+                        <div id="videoOutputPopup" class="video-output-popup">
+                            <div class="video-output-option" data-source="camera">
+                                <div class="video-output-option-icon">📷</div>
+                                <div class="video-output-option-text">摄像头视频流</div>
+                            </div>
+                            <div class="video-output-option" data-source="screen">
+                                <div class="video-output-option-icon">🖥️</div>
+                                <div class="video-output-option-text">屏幕共享</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="conferenceStatus" class="participants-count">未连接</div>
+                </div>
             </div>
             
             <div id="videoGrid" class="video-grid">
@@ -726,10 +1452,46 @@
                 </div>
             </div>
             
-            <div id="conferenceInfo" class="conference-info hidden">
-                <div class="conference-info-title">会议信息</div>
-                <div class="conference-info-description">
-                    您当前正在多人视频会议中。所有参会者之间建立了直接的 P2P 连接，无需中央服务器转发视频流。
+            <!-- 会议内聊天区域 -->
+            <div id="chatSection" class="sidebar-section chat-section">
+                <div class="sidebar-header">
+                    <span>聊天互动</span>
+                    <span id="chatStatus" class="participants-count">🟢 在线</span>
+                </div>
+                <div class="chat-hint">
+                    点击📎按钮选择文件（最大10MB）<br>
+                    选择文件后可点击×取消，Enter或点击发送按钮发送
+                </div>
+                <div class="chat-container">
+                    <div id="chatMessages" class="chat-messages">
+                        <div id="emptyChatMessage" class="empty-chat">
+                            <div class="empty-chat-icon">💬</div>
+                            <div>暂时没有聊天消息</div>
+                            <div style="font-size: 12px; margin-top: 8px;">开始聊天吧！</div>
+                        </div>
+                    </div>
+                    <div class="chat-input-container">
+                        <div class="file-input-container">
+                            <label for="fileInput" class="file-select-btn" title="选择文件">📎</label>
+                            <input type="file" id="fileInput" style="display: none;">
+                        </div>
+                        
+                        <!-- 文本输入框 -->
+                        <input type="text" id="chatInput" class="chat-input" placeholder="输入消息..." disabled>
+                        
+                        <!-- 文件预览区域（默认隐藏） -->
+                        <div id="filePreviewArea" class="file-preview-area" style="display: none;">
+                            <div class="file-preview-content">
+                                <div class="file-preview-info">
+                                    <div class="file-preview-name"></div>
+                                    <div class="file-preview-size"></div>
+                                </div>
+                                <button id="cancelFileBtn" class="cancel-file-btn" title="取消上传">×</button>
+                            </div>
+                        </div>
+                        
+                        <button id="chatSendBtn" class="chat-send-btn" disabled>发送</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -747,13 +1509,52 @@
         let members = new Set();
         let connections = new Map();
         let connectionCheckTimer = null;
-        
+        let qosReportInterval = null; // QoS 定期上报定时器
+        let reconnectAttempts = 0;
+        const MAX_RECONNECT_ATTEMPTS = 5;
+        let isReconnecting = false;
+
+        // QoS 累计统计
+        let sessionStatsAccumulator = {
+            rttSum: 0,
+            rttSamples: 0,
+            maxLatency: 0,
+            lastPeerLoss: new Map() // peerId -> lastCumulativeLoss
+        };
+
         // 设备状态跟踪
         let cameraStates = new Map();
         let micStates = new Map();
         let stateSequence = new Map();
         let myStateSequence = 0;
         let remoteStreams = new Map();
+        let peerStatsData = new Map(); // 存储每个远端的实时延迟和丢包
+        let pendingCandidates = new Map(); // 缓存在远程描述设置前到达的ICE候选
+        
+        // 聊天相关
+        let chatMessages = [];
+        let lastChatTime = 0; // 新增：记录上次发送聊天的时间，用于频率限制
+        const CHAT_THROTTLE_MS = 300; // 新增：聊天发送最小间隔 (300ms)
+
+        // 文件传输相关
+        let selectedFile = null;
+        let fileReaders = new Map(); // 存储正在读取的文件
+        
+        // 视频输出切换与放大相关变量
+        let isScreenSharing = false;
+        let currentVideoSource = 'camera'; // 'camera' 或 'screen'
+        let isHighLatencyMode = false;     // 高延迟模式 (降级分辨率)
+        let latencyHistory = [];           // 新增：延迟历史记录，用于平滑抖动
+        const LATENCY_THRESHOLD = 250;     // 优化：降低延迟阈值 (由300ms降至250ms) 以更灵敏地响应弱网
+        const HYSTERESIS_SAMPLES = 5;      // 新增：连续N个样本满足条件才切换模式
+        let screenStream = null;
+        let zoomedVideoId = null;
+        let isVideoZoomed = false;
+
+        // 独立的音频轨道变量
+        let microphoneAudioTrack = null;
+        let screenAudioTrack = null;
+        let currentAudioTrack = null;
         
         // 页面元素
         const connectBtn = document.getElementById('connectBtn');
@@ -766,11 +1567,23 @@
         const participantsList = document.getElementById('participantsList');
         const noParticipantsMessage = document.getElementById('noParticipantsMessage');
         const conferenceStatus = document.getElementById('conferenceStatus');
-        const conferenceInfo = document.getElementById('conferenceInfo');
         const emptyState = document.getElementById('emptyState');
         const toggleCameraBtn = document.getElementById('toggleCameraBtn');
         const toggleMicBtn = document.getElementById('toggleMicBtn');
         const browserWarning = document.getElementById('browserWarning');
+        
+        // 聊天元素
+        const chatSection = document.getElementById('chatSection');
+        const chatMessagesContainer = document.getElementById('chatMessages');
+        const emptyChatMessage = document.getElementById('emptyChatMessage');
+        const chatInput = document.getElementById('chatInput');
+        const chatSendBtn = document.getElementById('chatSendBtn');
+        const chatStatus = document.getElementById('chatStatus');
+        
+        // 新增：视频输出切换相关元素（现在在视频区域标题栏）
+        const toggleVideoOutputBtn = document.getElementById('toggleVideoOutputBtn');
+        const videoOutputPopup = document.getElementById('videoOutputPopup');
+        const videoOutputOptions = document.querySelectorAll('.video-output-option');
         
         // 检查浏览器兼容性
         let isSecureContext = window.isSecureContext || location.protocol === 'https:' || 
@@ -785,8 +1598,29 @@
             joinMeetingBtn.addEventListener('click', joinMeeting);
             leaveMeetingBtn.addEventListener('click', leaveMeeting);
             
+            // 聊天相关事件监听
+            chatInput.addEventListener('keypress', handleChatKeyPress);
+            chatSendBtn.addEventListener('click', sendChatMessage);
+            document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+            document.getElementById('cancelFileBtn').addEventListener('click', cancelFileUpload);
+            document.addEventListener('keydown', handleGlobalKeyDown);
+            
+            // 新增：视频输出切换事件监听
+            toggleVideoOutputBtn.addEventListener('click', toggleVideoOutputPopup);
+            videoOutputOptions.forEach(option => {
+                option.addEventListener('click', handleVideoOutputSelect);
+            });
+            
+            // 点击页面其他地方关闭弹窗
+            document.addEventListener('click', (e) => {
+                if (!toggleVideoOutputBtn.contains(e.target) && !videoOutputPopup.contains(e.target)) {
+                    videoOutputPopup.classList.remove('show');
+                }
+            });
+            
             checkBrowserCompatibility();
             updateUIState();
+            initDoubleClickZoom();
             
             // 自动连接本地服务器
             setTimeout(() => {
@@ -794,6 +1628,31 @@
                     connectToServer();
                 }
             }, 100);
+
+            // 修改聊天输入框事件监听
+            chatInput.addEventListener('input', function() {
+                // 只有在没有选择文件时，才根据输入框内容控制发送按钮
+                if (!selectedFile) {
+                    updateSendButtonState();
+                }
+            });
+            
+            // 发送按钮事件监听
+            chatSendBtn.addEventListener('click', sendMessage);
+            
+            // 键盘事件监听
+            chatInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    // 只有在按钮启用时才发送消息
+                    if (!chatSendBtn.disabled) {
+                        sendMessage();
+                    }
+                }
+            });
+            
+            // 初始状态：发送按钮禁用
+            chatSendBtn.disabled = true;
         }
         
         // ==================== 检查浏览器兼容性 ====================
@@ -813,38 +1672,46 @@
             }
         }
       
+        let wsReconnectTimer = null;
+        let wsReconnectAttempts = 0;
+        const WS_MAX_RECONNECT = 5;
+
         // ==================== 连接服务器 ====================
-        function connectToServer() {
-            if (connectBtn.disabled) return;
-            
+        function connectToServer(isReconnect = false) {
+            if (!isReconnect && connectBtn.disabled) return;
+
             const url = serverUrlInput.value.trim();
             const wsUrl = url.replace('http://', 'ws://').replace('https://', 'wss://');
-            
-            updateStatus(`正在连接服务器...`, 'info');
-            connectBtn.disabled = true;
-            
+
+            if (!isReconnect) {
+                updateStatus(`正在连接服务器...`, 'info');
+                connectBtn.disabled = true;
+            }
+
             if (ws) ws.close();
-            
+
             ws = new WebSocket(wsUrl);
-            
+
             ws.onopen = () => {
                 updateStatus('✓ 已连接服务器', 'success');
                 isConnected = true;
+                reconnectAttempts = 0;
+                if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
                 conferenceStatus.textContent = '已连接服务器';
-                
+
                 toggleCameraBtn.disabled = false;
                 toggleMicBtn.disabled = false;
                 joinMeetingBtn.disabled = false;
-                
+
                 connectBtn.disabled = false;
                 connectBtn.textContent = '已连接';
                 connectBtn.style.background = 'linear-gradient(90deg, #27ae60, #2ecc71)';
-                
+
                 if (ws.readyState === WebSocket.OPEN) {
                     ws.send(JSON.stringify({ type: 'get-members' }));
                 }
             };
-            
+
             ws.onmessage = (e) => {
                 try {
                     const msg = JSON.parse(e.data);
@@ -853,102 +1720,350 @@
                     console.error('消息解析失败:', err);
                 }
             };
-            
+
             ws.onclose = () => {
-                updateStatus('✗ 与服务器断开连接', 'error');
                 isConnected = false;
                 conferenceStatus.textContent = '连接断开';
                 connectBtn.disabled = false;
                 connectBtn.textContent = '连接服务器';
                 connectBtn.style.background = 'linear-gradient(90deg, #4776E6, #8E54E9)';
-                resetState();
+
+                // 无论是否在会议中，都清理 pendingCandidates（重连后 peer ID 全部失效）
+                pendingCandidates.clear();
+
+                // 如果是在会议中意外断线，触发完整清理
+                if (isInMeeting) {
+                    console.warn('⚠️ 会议中断线，执行完整清理...');
+
+                    // 关闭所有 P2P 连接（先收集 key 再关闭，避免边迭代边删 Map）
+                    const peerIds = Array.from(connections.keys());
+                    peerIds.forEach(id => closeConnection(id));
+                    connections.clear();
+                    remoteStreams.clear();
+
+                    // 清理所有远程视频容器
+                    const remoteContainers = videoGrid.querySelectorAll('.video-container:not(.local)');
+                    remoteContainers.forEach(container => container.remove());
+
+                    // 完全清空成员状态（重连后服务器会分配新 ID，旧 myId 不应残留）
+                    members.clear();
+                    cameraStates.clear();
+                    micStates.clear();
+                    stateSequence.clear();
+
+                    updateParticipantsList();
+                    checkConnectionsStatus();
+
+                    // 尝试自动重连
+                    if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                        reconnectAttempts++;
+                        const delay = Math.min(1000 * Math.pow(1.5, reconnectAttempts), 15000);
+                        updateStatus(`✗ 信令服务器断开，${Math.round(delay/1000)}秒后重连 (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`, 'error');
+                        if (wsReconnectTimer) clearTimeout(wsReconnectTimer);
+                        wsReconnectTimer = setTimeout(() => connectToServer(true), delay);
+                    } else {
+                        updateStatus('✗ 与服务器断开连接，请手动重连', 'error');
+                        // 不调用 resetState，保留本地视频和摄像头状态
+                    }
+                } else {
+                    updateStatus('✗ 与服务器断开连接', 'error');
+                }
             };
-            
+
             ws.onerror = (err) => {
                 console.error('连接错误:', err);
-                updateStatus('✗ 连接失败，请检查服务器', 'error');
-                connectBtn.disabled = false;
+                if (!isReconnect) {
+                    updateStatus('✗ 连接失败，请检查服务器', 'error');
+                    connectBtn.disabled = false;
+                }
             };
+        }
+
+        // ==================== 性能监控模块 ====================
+        const statsIntervals = new Map(); // 存储每个连接的定时器
+
+        // 开始监控指定连接的性能
+        function startStatsMonitoring(pc, peerId) {
+            if (statsIntervals.has(peerId)) return;
+
+            let prevBytesReceived = 0;
+            let prevTimestamp = 0;
+
+            const intervalId = setInterval(async () => {
+                if (pc.connectionState === 'closed' || pc.iceConnectionState === 'closed') {
+                    stopStatsMonitoring(peerId);
+                    return;
+                }
+                if (pc.connectionState !== 'connected' && pc.iceConnectionState !== 'connected' && pc.iceConnectionState !== 'completed') return;
+
+                try {
+                    const stats = await pc.getStats(null);
+                    let statsOutput = { rtt: 0, packetLoss: 0, bitrate: 0, resolution: '', hasVideo: false };
+
+                    let bestRtt = null;
+                    let videoStats = { packetsLost: 0, packetsReceived: 0 };
+                    let audioStats = { packetsLost: 0, packetsReceived: 0 };
+
+                    stats.forEach(report => {
+                        if (report.type === 'candidate-pair' && (report.nominated || report.state === 'succeeded')) {
+                            if (report.currentRoundTripTime !== undefined) {
+                                const rtt = report.currentRoundTripTime * 1000;
+                                if (bestRtt === null || rtt < bestRtt) bestRtt = rtt;
+                            }
+                        }
+
+                        if (report.type === 'inbound-rtp') {
+                            if (report.kind === 'video') {
+                                statsOutput.hasVideo = true;
+                                videoStats.packetsLost = report.packetsLost || 0;
+                                videoStats.packetsReceived = report.packetsReceived || 0;
+                                if (report.frameWidth) statsOutput.resolution = `${report.frameWidth}x${report.frameHeight}`;
+                                
+                                // 计算码率
+                                if (prevTimestamp > 0 && report.timestamp > prevTimestamp) {
+                                    const dt = (report.timestamp - prevTimestamp) / 1000;
+                                    const db = (report.bytesReceived || 0) - prevBytesReceived;
+                                    statsOutput.bitrate = Math.round((db * 8) / dt / 1000);
+                                }
+                                prevBytesReceived = report.bytesReceived || 0;
+                                prevTimestamp = report.timestamp || 0;
+                            } else if (report.kind === 'audio') {
+                                audioStats.packetsLost = report.packetsLost || 0;
+                                audioStats.packetsReceived = report.packetsReceived || 0;
+                            }
+                        }
+                    });
+
+                    // 综合计算丢包率 (音视频合并)
+                    const totalLost = videoStats.packetsLost + audioStats.packetsLost;
+                    const totalReceived = videoStats.packetsReceived + audioStats.packetsReceived;
+                    const totalPackets = totalLost + totalReceived;
+                    statsOutput.packetLoss = totalPackets > 0 ? (totalLost / totalPackets * 100) : 0;
+
+                    if (bestRtt !== null) statsOutput.rtt = bestRtt;
+
+                    updateStatsUI(peerId, statsOutput);
+
+                } catch (e) {
+                    console.error('获取统计数据失败:', e);
+                }
+            }, 1000);
+
+            statsIntervals.set(peerId, intervalId);
+        }
+
+        // 停止监控
+        function stopStatsMonitoring(peerId) {
+            if (statsIntervals.has(peerId)) {
+                clearInterval(statsIntervals.get(peerId));
+                statsIntervals.delete(peerId);
+
+                // 清除 UI 上的统计数据
+                const statsEl = document.getElementById(`stats-${peerId}`);
+                if (statsEl) statsEl.remove();
+
+                peerStatsData.delete(peerId);  // 清理已断开连接的统计数据
+            }
+        }
+
+        function updateStatsUI(peerId, data) {
+            const container = document.getElementById(`video-container-${peerId}`);
+            if (!container) return;
+
+            let statsEl = document.getElementById(`stats-${peerId}`);
+            if (!statsEl) {
+                statsEl = document.createElement('div');
+                statsEl.id = `stats-${peerId}`;
+                statsEl.className = 'stats-overlay';
+                container.appendChild(statsEl);
+            }
+
+            // 记录该 peer 的历史峰值
+            if (!peerStatsData.has(peerId)) {
+                peerStatsData.set(peerId, { 
+                    rtt: 0, 
+                    packetLoss: 0, 
+                    startTime: Date.now() // 记录连接开始时间用于统计“预热”
+                });
+            }
+            const currentPeerStats = peerStatsData.get(peerId);
+            currentPeerStats.rtt = data.rtt;
+            currentPeerStats.packetLoss = data.packetLoss;
+
+            // 更新会话全局累计统计
+            if (typeof data.rtt === 'number' && data.rtt >= 0) {
+                sessionStatsAccumulator.rttSum += data.rtt;
+                sessionStatsAccumulator.rttSamples++;
+                
+                // 增加 5 秒“预热期”，排除连接建立初期的网络波动 RTT 值
+                const connectionDuration = Date.now() - currentPeerStats.startTime;
+                if (connectionDuration > 5000) {
+                    sessionStatsAccumulator.maxLatency = Math.max(sessionStatsAccumulator.maxLatency, data.rtt);
+                    
+                    // 迟滞处理 (Hysteresis)：平滑 RTT 抖动，防止频繁切换分辨率
+                    latencyHistory.push(data.rtt);
+                    if (latencyHistory.length > HYSTERESIS_SAMPLES) latencyHistory.shift();
+                    
+                    if (latencyHistory.length === HYSTERESIS_SAMPLES) {
+                        const avgRtt = latencyHistory.reduce((a, b) => a + b) / HYSTERESIS_SAMPLES;
+                        const shouldBeHighLatency = avgRtt > LATENCY_THRESHOLD;
+                        
+                        if (shouldBeHighLatency !== isHighLatencyMode) {
+                            isHighLatencyMode = shouldBeHighLatency;
+                            console.log(`⚠️ 网络波动检测: 切换到 ${isHighLatencyMode ? '弱网降级' : '正常'} 模式 (平均 RTT: ${Math.round(avgRtt)}ms)`);
+                            // 立即更新所有连接的媒体编码参数
+                            connections.forEach(pc => updateConnectionTracks(pc));
+                        }
+                    }
+                }
+            }
+            // 丢包是累计的，记录每个 peer 的最新丢包情况
+            sessionStatsAccumulator.lastPeerLoss.set(peerId, data.packetLoss);
+
+            let rttColor = '';
+            if (data.rtt > 200) rttColor = 'stats-danger';
+            else if (data.rtt > 100) rttColor = 'stats-warning';
+
+            statsEl.innerHTML = `
+                <div class="${rttColor}">延迟: ${data.rtt.toFixed(1)} ms</div>
+                <div>丢包: ${data.packetLoss.toFixed(1)}%</div>
+                <div>分辨率: ${data.resolution || 'N/A'}</div>
+                <div>码率: ${data.bitrate > 0 ? data.bitrate + ' kbps' : 'N/A'}</div>
+            `;
         }
       
         // ==================== 消息处理 ====================
         function handleMessage(msg) {
             switch (msg.type) {
-                case 'id':
+                case 'id': {
+                    const oldId = myId;
                     myId = msg.id;
+                    // 重连时旧 ID 已失效：移除旧视频容器、清理所有旧 ID 相关状态
+                    if (oldId && oldId !== myId) {
+                        const oldContainer = document.getElementById(`video-container-${oldId}`);
+                        if (oldContainer) oldContainer.remove();
+                        members.delete(oldId);
+                        cameraStates.delete(oldId);
+                        micStates.delete(oldId);
+                        stateSequence.delete(oldId);
+                        // 旧 ID 的 pendingCandidates 全部失效，清除防止泄漏
+                        pendingCandidates.delete(oldId);
+                    }
                     updateParticipantsList();
                     break;
+                }
                     
-                case 'members':
+                    case 'members':
                     const newMembers = new Set(msg.members);
-                    members = newMembers;
-                    
-                    if (isInMeeting && !members.has(myId)) {
-                        members.add(myId);
+
+                    if (isInMeeting && !newMembers.has(myId)) {
+                        newMembers.add(myId);
                     }
-                    
+
+                    const leftMembers = Array.from(members).filter(id => !newMembers.has(id));
+                    leftMembers.forEach(id => {
+                        members.delete(id);
+                        cameraStates.delete(id);
+                        micStates.delete(id);
+                        stateSequence.delete(id);
+                        removeVideoElement(id);
+                        closeConnection(id);
+                    });
+
+                    const joinedMembers = Array.from(newMembers).filter(id => !members.has(id));
+                    joinedMembers.forEach(id => {
+                        members.add(id);
+                        if (!cameraStates.has(id)) cameraStates.set(id, false);
+                        if (!micStates.has(id)) micStates.set(id, false);
+                        if (!stateSequence.has(id)) stateSequence.set(id, 0);
+                    });
+
+                    members = newMembers;
+
                     members.forEach(id => {
                         if (!cameraStates.has(id)) cameraStates.set(id, false);
                         if (!micStates.has(id)) micStates.set(id, false);
                         if (!stateSequence.has(id)) stateSequence.set(id, 0);
                     });
-                    
+
                     updateParticipantsList();
-                    
+
                     if (connectionCheckTimer) {
-                        clearTimeout(connectionCheckTimer);
+                        clearInterval(connectionCheckTimer);
                         connectionCheckTimer = null;
                     }
-                    
+
                     if (isInMeeting) {
                         const otherMembers = Array.from(members).filter(id => id !== myId);
-                        
+
                         if (otherMembers.length === 0) {
                             updateStatus('✓ 已加入会议（当前只有您一人）', 'success');
                             conferenceStatus.textContent = '会议中 (1人在线)';
                         } else {
-                            updateStatus(`正在建立P2P连接 (${otherMembers.length}个连接)...`, 'info');
-                            
+                            updateStatus(`正在建立与${otherMembers.length}个参与者的P2P连接...`, 'info');
+
+                            // 统一处理：确保每个成员都有连接和视频容器
                             otherMembers.forEach(id => {
                                 if (!connections.has(id)) {
+                                    connectionAttempts.set(id, 0);
                                     createPeerConnection(id);
+                                }
+                                if (!document.getElementById(`video-container-${id}`)) {
                                     createRemoteVideoContainer(id);
                                 }
                             });
-                            
-                            connectionCheckTimer = setTimeout(() => {
-                                checkConnectionsStatus();
-                            }, 3000);
+
+                            connectionCheckTimer = setInterval(checkConnectionsStatus, 5000);
                         }
                     }
+
+                    // 延迟验证状态同步
+                    setTimeout(() => {
+                        validateAndSyncState();
+                    }, 1000);
                     break;
-                    
+
                 case 'user-join':
                     if (msg.id !== myId) {
                         members.add(msg.id);
                         if (!cameraStates.has(msg.id)) cameraStates.set(msg.id, false);
                         if (!micStates.has(msg.id)) micStates.set(msg.id, false);
                         if (!stateSequence.has(msg.id)) stateSequence.set(msg.id, 0);
+
                         updateParticipantsList();
-                        
+
                         if (isInMeeting) {
-                            createPeerConnection(msg.id);
-                            createRemoteVideoContainer(msg.id);
-                            updateStatus(`正在与新成员建立连接...`, 'info');
+                            if (!connections.has(msg.id)) {
+                                connectionAttempts.set(msg.id, 0);
+                                createPeerConnection(msg.id);
+                            }
+                            if (!document.getElementById(`video-container-${msg.id}`)) {
+                                createRemoteVideoContainer(msg.id);
+                            }
+                            updateStatus(`正在与 ${msg.id.substring(0,6)} 建立连接...`, 'info');
                         }
                     }
                     break;
-                    
+
                 case 'user-leave':
                     members.delete(msg.id);
                     cameraStates.delete(msg.id);
                     micStates.delete(msg.id);
                     stateSequence.delete(msg.id);
-                    updateParticipantsList();
-                    
-                    removeVideoElement(msg.id);
                     closeConnection(msg.id);
+
+                    // 移除视频元素
+                    removeVideoElement(msg.id);
+
+                    // 更新 UI
+                    updateParticipantsList();
                     checkConnectionsStatus();
+
+                    // 如果没有其他参与者了，显示空状态
+                    const otherMembers = Array.from(members).filter(id => id !== myId);
+                    if (otherMembers.length === 0 && isInMeeting) {
+                        updateStatus('✓ 会议中只剩您一人', 'info');
+                    }
                     break;
                     
                 case 'signal':
@@ -965,18 +2080,38 @@
                             stateSequence.set(msg.userId, msg.sequence);
                             cameraStates.set(msg.userId, msg.cameraOn);
                             micStates.set(msg.userId, msg.micOn);
-                            
-                            console.log(`收到 ${msg.userId} 的设备状态: 摄像头${msg.cameraOn ? '开启' : '关闭'}, 麦克风${msg.micOn ? '开启' : '关闭'}`);
-                            
                             updateVideoDisplay(msg.userId, msg.cameraOn);
                             updateParticipantsList();
                         }
+                    }
+                    break;
+                    
+                case 'chat-message':
+                    if (msg.senderId && msg.message) {
+                        displayChatMessage(msg.senderId, msg.message, msg.timestamp);
+                    }
+                    break;
+
+                case 'file-message':
+                    if (msg.senderId && msg.fileName && msg.fileData) {
+                        displayFileMessage(msg.senderId, {
+                            fileId: msg.fileId,
+                            fileName: msg.fileName,
+                            fileType: msg.fileType,
+                            fileSize: msg.fileSize,
+                            fileData: msg.fileData,
+                            timestamp: msg.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        }, false);
                     }
                     break;
             }
         }
       
         // ==================== 检查连接状态 ====================
+        let connectionAttempts = new Map(); // 记录每个peer的连接尝试次数
+        const MAX_CONNECTION_ATTEMPTS = 3;
+        const CONNECTION_TIMEOUT = 3000;    // 3秒超时
+
         function checkConnectionsStatus() {
             const otherMembers = Array.from(members).filter(id => id !== myId);
             
@@ -991,58 +2126,163 @@
             }
             
             if (isInMeeting) {
+                // 自动修复机制：检查每一个应该存在的连接
+                otherMembers.forEach(id => {
+                    const pc = connections.get(id);
+                    const badStates = ['failed', 'closed'];
+                    
+                    // 1. 如果完全没有连接，或者连接已关闭/失败，则重新创建
+                    if (!pc || badStates.includes(pc.iceConnectionState) || badStates.includes(pc.connectionState)) {
+                        console.warn(`检测到与 ${id} 的连接异常，尝试重新建立...`);
+                        closeConnection(id);
+                        createPeerConnection(id);
+                    } 
+                    // 2. 对于 disconnected 状态，让 oniceconnectionstatechange 的 restartIce 处理，这里不做激进操作
+                });
+
                 const establishedConnections = otherMembers.filter(id => {
                     const pc = connections.get(id);
-                    return pc && (pc.connectionState === 'connected' || pc.iceConnectionState === 'connected');
+                    return pc && (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed');
+                });
+                
+                const connectingConnections = otherMembers.filter(id => {
+                    const pc = connections.get(id);
+                    return pc && (pc.iceConnectionState === 'checking' || pc.connectionState === 'connecting');
+                });
+                
+                const newConnections = otherMembers.filter(id => {
+                    const pc = connections.get(id);
+                    return !pc || pc.iceConnectionState === 'new';
                 });
                 
                 if (establishedConnections.length === otherMembers.length) {
                     updateStatus(`✓ 已建立所有P2P连接 (${establishedConnections.length}个连接)`, 'success');
                     conferenceStatus.textContent = `会议中 (${members.size}人在线)`;
-                } else if (establishedConnections.length > 0) {
-                    updateStatus(`✓ 已连接 ${establishedConnections.length}/${otherMembers.length} 个参与者`, 'info');
-                    conferenceStatus.textContent = `会议中 (${members.size}人在线)`;
                 } else {
-                    updateStatus('🔄 正在尝试建立P2P连接...', 'info');
-                    conferenceStatus.textContent = '连接建立中...';
+                    let statusMsg = `✓ 已连接 ${establishedConnections.length}/${otherMembers.length} 个参与者`;
+                    if (connectingConnections.length > 0) statusMsg += `，${connectingConnections.length}个连接中`;
+                    if (newConnections.length > 0) statusMsg += `，${newConnections.length}个等待连接`;
+                    updateStatus(statusMsg, 'info');
+                    conferenceStatus.textContent = `会议中 (${members.size}人在线)`;
                 }
             }
         }
       
-        // ==================== 处理信令消息 ====================
-        function handleSignal(from, data) {
+        // ==================== 处理信令消息 (Perfect Negotiation 模式) ====================
+        async function handleSignal(from, data) {
             if (!isInMeeting) return;
-            
-            const pc = connections.get(from);
-            
+
+            let pc = connections.get(from);
             if (!pc) {
-                createPeerConnection(from);
+                pc = createPeerConnection(from);
                 createRemoteVideoContainer(from);
-                setTimeout(() => handleSignal(from, data), 100);
-                return;
             }
-            
-            if (data.sdp) {
-                const desc = new RTCSessionDescription(data.sdp);
-                pc.setRemoteDescription(desc).then(() => {
-                    if (desc.type === 'offer') {
-                        return pc.createAnswer().then(answer => {
-                            return pc.setLocalDescription(answer);
-                        }).then(() => {
-                            sendSignal(from, { sdp: pc.localDescription });
-                        });
+
+            try {
+                if (data.sdp) {
+                    const desc = new RTCSessionDescription(data.sdp);
+                    const offerCollision = desc.type === 'offer' && 
+                        (pc.makingOffer || pc.signalingState !== 'stable');
+                    
+                    const ids = [from, myId].sort();
+                    const isPolite = ids[1] === myId; // ID 较大的作为 Polite 端
+
+                    pc.ignoreOffer = !isPolite && offerCollision;
+                    if (pc.ignoreOffer) return;
+
+                    // 如果是 Polite 端且存在冲突，需要回滚本地 Offer 以接受对方的 Offer
+                    if (offerCollision) {
+                        await pc.setLocalDescription({ type: 'rollback' });
+                        await pc.setRemoteDescription(desc);
+                    } else {
+                        await pc.setRemoteDescription(desc);
                     }
-                }).catch(err => {
-                    console.error('设置远程描述失败:', err);
-                });
-            } else if (data.candidate) {
-                pc.addIceCandidate(new RTCIceCandidate(data.candidate))
-                    .catch(err => {
-                        console.error('添加ICE候选失败:', err);
-                    });
+
+                    if (desc.type === 'offer') {
+                        const answer = await pc.createAnswer();
+                        const optimizedSDP = optimizeAudioSDP(answer.sdp);
+                        const answerDesc = { type: 'answer', sdp: optimizedSDP };
+                        await pc.setLocalDescription(answerDesc);
+                        sendSignal(from, { sdp: answerDesc });
+                    }
+                    
+                    // 处理缓存的 ICE 候选
+                    if (pendingCandidates.has(from)) {
+                        const candidates = pendingCandidates.get(from);
+                        pendingCandidates.delete(from);
+                        for (const candidate of candidates) {
+                            await pc.addIceCandidate(candidate).catch(() => {});
+                        }
+                    }
+                } else if (data.candidate) {
+                    try {
+                        if (pc.remoteDescription && pc.remoteDescription.type) {
+                            await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+                        } else {
+                            if (!pendingCandidates.has(from)) pendingCandidates.set(from, []);
+                            pendingCandidates.get(from).push(data.candidate);
+                        }
+                    } catch (e) {
+                        if (!pc.ignoreOffer) console.warn('添加 ICE 候选失败:', e);
+                    }
+                }
+            } catch (err) {
+                console.error('信令处理错误:', err);
             }
         }
-      
+
+        // ==================== 优化SDP中的音频参数 ====================
+        function optimizeAudioSDP(sdp) {
+            let lines = sdp.split('\r\n');
+            let opusPayloadTypes = [];
+            
+            // 1. 查找所有 opus payload types
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].includes('a=rtpmap') && lines[i].includes('opus/48000')) {
+                    const match = lines[i].match(/a=rtpmap:(\d+) opus\/48000/);
+                    if (match) {
+                        opusPayloadTypes.push(match[1]);
+                    }
+                }
+            }
+            
+            // 2. 如果找到 opus，设置相关参数
+            opusPayloadTypes.forEach(payloadType => {
+                for (let i = 0; i < lines.length; i++) {
+                    if (lines[i].startsWith(`a=fmtp:${payloadType}`)) {
+                        // 添加/修改参数：使用前向纠错(FEC)、非连续传输(DTX)、限制码率以保证稳定性
+                        let params = lines[i];
+                        if (!params.includes('useinbandfec=1')) params += ';useinbandfec=1';
+                        if (!params.includes('usedtx=1')) params += ';usedtx=1';
+                        if (!params.includes('maxaveragebitrate')) params += ';maxaveragebitrate=64000';
+                        if (!params.includes('stereo=0')) params += ';stereo=0';
+                        if (!params.includes('sprop-stereo=0')) params += ';sprop-stereo=0';
+                        lines[i] = params;
+                        break;
+                    }
+                }
+            });
+
+            // 3. 提高音频包的优先级
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].startsWith('m=audio')) {
+                    let foundPtime = false;
+                    for (let j = i + 1; j < lines.length && !lines[j].startsWith('m='); j++) {
+                        if (lines[j].startsWith('a=ptime:')) {
+                            foundPtime = true;
+                            break;
+                        }
+                    }
+                    if (!foundPtime) {
+                        lines.splice(i + 1, 0, 'a=ptime:20');
+                    }
+                    break;
+                }
+            }
+            
+            return lines.join('\r\n');
+        }
+
         // ==================== 发送信令消息 ====================
         function sendSignal(target, data) {
             if (ws && ws.readyState === WebSocket.OPEN) {
@@ -1065,210 +2305,1071 @@
                     micOn: isMicOn,
                     sequence: myStateSequence
                 }));
-                console.log(`发送设备状态: 摄像头${isCameraOn ? '开启' : '关闭'}, 麦克风${isMicOn ? '开启' : '关闭'}`);
             }
         }
+
+        // ==================== 新增：切换视频输出弹窗 ====================
+        function toggleVideoOutputPopup() {
+            if (!isCameraOn) {
+                updateStatus('请先开启摄像头', 'error');
+                return;
+            }
+            
+            videoOutputPopup.classList.toggle('show');
+            
+            // 更新选项激活状态
+            videoOutputOptions.forEach(option => {
+                const source = option.getAttribute('data-source');
+                if (source === currentVideoSource) {
+                    option.classList.add('active');
+                } else {
+                    option.classList.remove('active');
+                }
+            });
+        }
+        
+        // ==================== 处理视频输出选择 ====================
+        async function handleVideoOutputSelect(e) {
+            const source = e.currentTarget.getAttribute('data-source');
+            
+            if (source === currentVideoSource) {
+                videoOutputPopup.classList.remove('show');
+                return;
+            }
+            
+            try {
+                currentVideoSource = source; // 立即更新源标识，供后续 updateConnectionTracks 使用
+                
+                if (source === 'screen') {
+                    // 检查是否支持音频捕获
+                    const isAudioSupported = await checkScreenShareAudioSupport();
+                    
+                    if (!isAudioSupported) {
+                        const userConfirmed = confirm(
+                            '您的浏览器可能不支持捕获系统音频。\n' +
+                            '在屏幕共享时，其他用户可能听不到您播放的视频声音。\n' +
+                            '是否继续？\n\n' +
+                            '推荐使用 Chrome 或 Edge 浏览器以获得最佳体验。'
+                        );
+                        
+                        if (!userConfirmed) {
+                            currentVideoSource = 'camera'; // 恢复原状态
+                            videoOutputPopup.classList.remove('show');
+                            return;
+                        }
+                    }
+                    
+                    await switchToScreenShare();
+                } else {
+                    await switchToCamera();
+                }
+                
+                updateVideoOutputUI();
+                videoOutputPopup.classList.remove('show');
+                
+                const statusMsg = source === 'screen' 
+                    ? '已切换到屏幕共享' + (screenAudioTrack ? '（带系统音频）' : '（无系统音频）')
+                    : '已切换到摄像头视频流';
+                updateStatus(statusMsg, 'success');
+                
+            } catch (err) {
+                console.error('切换视频源失败:', err);
+                // 发生错误时尝试恢复
+                currentVideoSource = source === 'screen' ? 'camera' : 'screen';
+                updateStatus(`切换失败: ${err.message}`, 'error');
+            }
+        }
+        
+        // ==================== 切换到屏幕共享 ====================
+        async function switchToScreenShare() {
+            try {
+                // 获取屏幕共享流（尝试同时捕获音频）
+                const constraints = {
+                    video: {
+                        cursor: "always",
+                        displaySurface: "monitor",
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: true  // 尝试捕获系统音频
+                };
+                
+                screenStream = await navigator.mediaDevices.getDisplayMedia(constraints);
+                
+                // 检查是否成功捕获了音频轨道
+                const audioTracks = screenStream.getAudioTracks();
+                const videoTracks = screenStream.getVideoTracks();
+                
+                if (videoTracks.length === 0) {
+                    throw new Error('未能捕获屏幕视频');
+                }
+                
+                // 监听屏幕共享停止事件
+                videoTracks[0].addEventListener('ended', () => {
+                    if (currentVideoSource === 'screen') {
+                        switchToCamera().catch(console.error);
+                    }
+                });
+                
+                // 保存屏幕共享的音频轨道
+                if (audioTracks.length > 0) {
+                    screenAudioTrack = audioTracks[0];
+                    
+                } else {
+                    screenAudioTrack = null;
+                    
+                }
+                
+                // 创建用于发送的流 - 包含屏幕视频和系统音频
+                const sendStream = new MediaStream();
+                sendStream.addTrack(videoTracks[0]); // 屏幕视频轨道
+                
+                // 优先使用系统音频轨道
+                if (screenAudioTrack) {
+                    currentAudioTrack = screenAudioTrack;
+                    sendStream.addTrack(screenAudioTrack);
+                    
+                } else if (microphoneAudioTrack) {
+                    // 如果没有系统音频，使用麦克风音频（如果麦克风已开启）
+                    currentAudioTrack = microphoneAudioTrack;
+                    sendStream.addTrack(microphoneAudioTrack);
+                    
+                } else {
+                    currentAudioTrack = null;
+                    
+                }
+                
+                // 保存当前的摄像头视频轨道（如果有）
+                const originalVideoTracks = myStream ? myStream.getVideoTracks() : [];
+                
+                // 更新本地流
+                if (!myStream) {
+                    myStream = new MediaStream();
+                } else {
+                    // 移除所有轨道
+                    myStream.getTracks().forEach(track => {
+                        myStream.removeTrack(track);
+                        if (track !== microphoneAudioTrack && track !== screenAudioTrack) {
+                            track.stop();
+                        }
+                    });
+                }
+                
+                // 添加新的轨道
+                sendStream.getTracks().forEach(track => {
+                    myStream.addTrack(track);
+                });
+                
+                isScreenSharing = true;
+                isCameraOn = true; // 屏幕共享视为摄像头开启状态
+                cameraStates.set(myId, true);
+                
+                // 更新UI
+                toggleCameraBtn.textContent = '屏幕共享';
+                toggleCameraBtn.className = 'device-toggle-btn on';
+                
+                // 更新视频标签显示
+                const labelElement = document.querySelector(`#video-container-${myId} .video-label`);
+                if (labelElement) {
+                    const audioStatus = screenAudioTrack ? '· 系统音频' : (microphoneAudioTrack ? '· 麦克风音频' : '· 无音频');
+                    labelElement.innerHTML = `
+                        <span class="status-indicator ${isInMeeting ? 'online' : 'offline'}"></span>
+                        我 (${myId}) · 屏幕共享 ${audioStatus}
+                    `;
+                }
+                
+                // 更新本地视频显示
+                updateLocalVideoDisplay();
+                
+                // 更新所有连接的轨道
+                connections.forEach((pc) => {
+                    updateConnectionTracks(pc);
+                });
+
+                // 广播设备状态
+                sendDeviceStatus();
+
+            } catch (err) {
+                console.error('获取屏幕共享失败:', err);
+                throw err;
+            }
+        }
+        
+        
+        // ==================== 切换到摄像头 ====================
+        async function switchToCamera() {
+            if (screenStream) {
+                // 停止屏幕共享流（保留音频轨道引用以便之后使用）
+                screenStream.getVideoTracks().forEach(track => track.stop());
+                // 不停止音频轨道，因为可能在其他地方使用
+                screenStream = null;
+            }
+            
+            // 重置屏幕音频轨道引用
+            screenAudioTrack = null;
+            
+            // 重新获取摄像头流
+            let videoStream;
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        frameRate: { ideal: 24 }
+                    },
+                    audio: false
+                });
+            } catch (err) {
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            }
+            const videoTrack = videoStream.getVideoTracks()[0];
+            
+            // 创建用于发送的流 - 包含摄像头视频和适当的音频
+            const sendStream = new MediaStream();
+            sendStream.addTrack(videoTrack); // 摄像头视频轨道
+            
+            // 决定使用哪个音频轨道
+            if (isMicOn && microphoneAudioTrack) {
+                currentAudioTrack = microphoneAudioTrack;
+                sendStream.addTrack(microphoneAudioTrack);
+            } else {
+                currentAudioTrack = null;
+            }
+            
+            // 更新本地流
+            if (!myStream) {
+                myStream = new MediaStream();
+            } else {
+                // 移除所有轨道
+                myStream.getTracks().forEach(track => {
+                    myStream.removeTrack(track);
+                    if (track !== microphoneAudioTrack && track !== screenAudioTrack) {
+                        track.stop();
+                    }
+                });
+            }
+            
+            // 添加新的轨道
+            sendStream.getTracks().forEach(track => {
+                myStream.addTrack(track);
+            });
+            
+            isScreenSharing = false;
+            isCameraOn = true;
+            cameraStates.set(myId, true);
+            
+            // 更新UI
+            toggleCameraBtn.textContent = '已开启';
+            toggleCameraBtn.className = 'device-toggle-btn on';
+            
+            // 更新视频标签显示
+            const labelElement = document.querySelector(`#video-container-${myId} .video-label`);
+            if (labelElement) {
+                const audioStatus = isMicOn ? '· 麦克风开启' : '';
+                labelElement.innerHTML = `
+                    <span class="status-indicator ${isInMeeting ? 'online' : 'offline'}"></span>
+                    我 (${myId}) ${audioStatus}
+                `;
+            }
+            
+            // 更新本地视频显示
+            updateLocalVideoDisplay();
+            
+            // 更新所有连接的轨道
+            connections.forEach((pc) => {
+                updateConnectionTracks(pc);
+            });
+
+            // 广播设备状态
+            sendDeviceStatus();
+        }
+        
+        // ==================== 替换视频轨道（同时处理音频轨道） ====================
+        async function replaceVideoTrack(newVideoTrack, newStream = null) {
+            if (!myStream) return;
+
+            // 移除旧视频轨道
+            myStream.getVideoTracks().forEach(t => { myStream.removeTrack(t); t.stop(); });
+            myStream.addTrack(newVideoTrack);
+
+            // 处理音频轨道
+            if (newStream) {
+                const newAudioTracks = newStream.getAudioTracks();
+                if (newAudioTracks.length > 0) {
+                    myStream.getAudioTracks().forEach(t => myStream.removeTrack(t));
+                    myStream.addTrack(newAudioTracks[0]);
+                }
+            }
+
+            // 更新本地视频显示
+            const videoElement = document.getElementById(`video-${myId}`);
+            if (videoElement) {
+                const displayStream = new MediaStream([newVideoTrack]);
+                videoElement.srcObject = displayStream;
+                videoElement.play().catch(e => console.log('播放视频失败:', e));
+            }
+
+            // 更新所有连接中的轨道
+            connections.forEach((pc) => {
+                updateConnectionTracks(pc);
+            });
+        }
+        
+        // ==================== 更新视频输出UI ====================
+        function updateVideoOutputUI() {
+            if (!isCameraOn) {
+                toggleVideoOutputBtn.disabled = true;
+                return;
+            }
+            
+            toggleVideoOutputBtn.disabled = false;
+            
+            if (currentVideoSource === 'screen') {
+                toggleVideoOutputBtn.innerHTML = '<span class="video-output-icon">🖥️</span><span class="video-output-text">屏幕共享</span>';
+                // 更新视频标签显示
+                const labelElement = document.querySelector(`#video-container-${myId} .video-label`);
+                if (labelElement) {
+                    labelElement.innerHTML = `
+                        <span class="status-indicator ${isInMeeting ? 'online' : 'offline'}"></span>
+                        我 (${myId}) · 屏幕共享
+                    `;
+                }
+            } else {
+                toggleVideoOutputBtn.innerHTML = '<span class="video-output-icon">📷</span><span class="video-output-text">摄像头</span>';
+                // 恢复视频标签显示
+                const labelElement = document.querySelector(`#video-container-${myId} .video-label`);
+                if (labelElement) {
+                    labelElement.innerHTML = `
+                        <span class="status-indicator ${isInMeeting ? 'online' : 'offline'}"></span>
+                        我 (${myId}) ${isInMeeting ? '· 会议中' : ''}
+                    `;
+                }
+            }
+        }
+
+        function checkScreenShareAudioSupport() {
+            // 检查浏览器是否支持捕获屏幕音频
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+                console.warn('浏览器不支持屏幕共享');
+                return false;
+            }
+            
+            // 检查是否有音频捕获能力
+            const hasAudio = 'getDisplayMedia' in navigator.mediaDevices;
+            
+            // 尝试更详细的检测
+            if (hasAudio) {
+                // 在Chrome和Edge中，可以尝试捕获音频
+                const userAgent = navigator.userAgent.toLowerCase();
+                const isChrome = userAgent.includes('chrome') && !userAgent.includes('edg');
+                const isEdge = userAgent.includes('edg');
+                
+                if (isChrome || isEdge) {
+                    
+                    return true;
+                } else if (userAgent.includes('firefox')) {
+                    
+                    return false;
+                } else {
+                    
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
+        // ==================== 全局键盘事件处理 ====================
+        function handleGlobalKeyDown(e) {
+            // 只有在会议中且焦点不在其他输入框中时，才处理 Enter 键
+            if (!isInMeeting) return;
+            
+            // 检查是否按下了 Enter 键且没有按下 Shift
+            if (e.key === 'Enter' && !e.shiftKey) {
+                // 检查焦点是否在聊天输入框或其他输入框中
+                const activeElement = document.activeElement;
+                const isInInput = activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA';
+                
+                // 如果焦点在其他输入框中（如服务器地址输入框），不处理
+                if (isInInput && activeElement.id !== 'chatInput') {
+                    return;
+                }
+                
+                // 阻止默认行为，避免在文本框中换行
+                e.preventDefault();
+                
+                // 只有在发送按钮启用时才发送消息
+                if (!chatSendBtn.disabled) {
+                    sendMessage();
+                }
+            }
+        }
+        
+        // ==================== 处理聊天按键事件 ====================
+        function handleChatKeyPress(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        }
+        
+        // ==================== 显示聊天消息 ====================
+        function displayChatMessage(senderId, message, timestamp, isLocal = false) {
+            // 隐藏空聊天提示
+            if (emptyChatMessage && !emptyChatMessage.classList.contains('hidden')) {
+                emptyChatMessage.classList.add('hidden');
+            }
+            
+            // 创建消息元素
+            const messageElement = document.createElement('div');
+            messageElement.className = `chat-message ${isLocal ? 'local' : 'remote'}`;
+            
+            const senderName = isLocal ? '我' : `用户 ${senderId.substring(0, 6)}`;
+            
+            // 修改HTML结构，将时间放在消息头部右侧，与发送者同一行
+            messageElement.innerHTML = `
+                <div class="message-header">
+                    <div class="message-sender ${isLocal ? 'local' : 'remote'}">${senderName}</div>
+                    <div class="message-time ${isLocal ? 'local' : 'remote'}">${timestamp}</div>
+                </div>
+                <div class="message-content">${escapeHtml(message)}</div>
+            `;
+            
+            // 添加到消息容器
+            chatMessagesContainer.appendChild(messageElement);
+            
+            // 滚动到底部
+            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+            
+            // 添加到消息历史
+            chatMessages.push({
+                senderId: senderId,
+                message: message,
+                timestamp: timestamp,
+                isLocal: isLocal
+            });
+        }
+
+        // ==================== 更新发送按钮状态 ====================
+        function updateSendButtonState() {
+            if (!isInMeeting) {
+                chatSendBtn.disabled = true;
+                return;
+            }
+            
+            // 如果选择了文件，按钮启用
+            if (selectedFile) {
+                chatSendBtn.disabled = false;
+                return;
+            }
+            
+            // 如果没有选择文件，根据输入框内容决定
+            const hasMessage = chatInput.value.trim().length > 0;
+            chatSendBtn.disabled = !hasMessage;
+        }
+
+        // ==================== 处理文件选择 ====================
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // 文件大小限制：10MB
+            const maxSize = 10 * 1024 * 1024;
+            if (file.size > maxSize) {
+                updateStatus('文件大小超过10MB限制', 'error');
+                event.target.value = '';
+                return;
+            }
+            
+            selectedFile = file;
+            
+            // 更新UI：隐藏文本输入框，显示文件预览区域
+            const chatInput = document.getElementById('chatInput');
+            const filePreviewArea = document.getElementById('filePreviewArea');
+            const filePreviewName = filePreviewArea.querySelector('.file-preview-name');
+            const filePreviewSize = filePreviewArea.querySelector('.file-preview-size');
+            
+            chatInput.style.display = 'none';
+            chatInput.value = ''; // 清空文本输入
+            
+            filePreviewName.textContent = file.name;
+            filePreviewSize.textContent = formatFileSize(file.size);
+            filePreviewArea.style.display = 'block';
+
+            // 将焦点设置到文件预览区域，这样可以直接按 Enter 发送
+            filePreviewArea.focus();
+
+            // 更新发送按钮状态
+            updateSendButtonState();
+            
+            updateStatus(`已选择文件: ${file.name} (${formatFileSize(file.size)})`, 'info');
+        }
+        
+        // ==================== 取消文件上传 ====================
+        function cancelFileUpload() {
+            selectedFile = null;
+            
+            // 重置文件输入
+            document.getElementById('fileInput').value = '';
+            
+            // 更新UI：显示文本输入框，隐藏文件预览区域
+            const chatInput = document.getElementById('chatInput');
+            const filePreviewArea = document.getElementById('filePreviewArea');
+            
+            chatInput.style.display = 'block';
+            filePreviewArea.style.display = 'none';
+
+            // 将焦点设置回文本输入框
+            chatInput.focus();
+            
+            // 更新发送按钮状态
+            updateSendButtonState();
+            
+            updateStatus('已取消文件上传', 'info');
+        }
+        
+        // ==================== 发送消息（文本或文件） ====================
+        function sendMessage() {
+            if (!ws || ws.readyState !== WebSocket.OPEN || !isInMeeting) {
+                updateStatus('请先加入会议', 'error');
+                return;
+            }
+            
+            // 如果有选中的文件，发送文件
+            if (selectedFile) {
+                sendFile();
+            } else {
+                // 频率限制检查
+                const now = Date.now();
+                if (now - lastChatTime < CHAT_THROTTLE_MS) {
+                    updateStatus('⚠️ 发送消息过于频繁，请稍候', 'info');
+                    return;
+                }
+                lastChatTime = now;
+                
+                // 否则发送文本消息
+                sendTextMessage();
+            }
+        }
+        
+        // ==================== 发送文本消息 ====================
+        function sendTextMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+            
+            const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            const chatPayload = JSON.stringify({
+                type: 'chat-message',
+                senderId: myId,
+                message: message,
+                timestamp: timestamp
+            });
+
+            // 核心逻辑：多人 Mesh 会议中，聊天信息通过 WebSocket (信令服务器) 转发最为稳健
+            // 这样手机端只需发送 1 次请求，而不需要给 3 个对端分别发送 P2P 包，极大地节省了手机的上行带宽
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(chatPayload);
+            } else {
+                updateStatus('⚠️ 无法发送消息：信令连接已断开', 'error');
+                return;
+            }
+            
+            displayChatMessage(myId, message, timestamp, true);
+            chatInput.value = '';
+            chatInput.focus();
+            updateSendButtonState();
+        }
+
+        // ==================== 发送文件 ====================
+        function sendFile() {
+            if (!selectedFile) {
+                return;
+            }
+
+            // 弱网预警
+            if (isHighLatencyMode) {
+                if (!confirm('⚠️ 当前网络状态较差，发送大文件可能会导致视频会议卡顿甚至断连，是否继续？')) {
+                    cancelFileUpload();
+                    return;
+                }
+            }
+            
+            // 限制文件大小为 10MB (WebSocket 传输大 Base64 极其危险)
+            const MAX_FILE_SIZE = 10 * 1024 * 1024;
+            if (selectedFile.size > MAX_FILE_SIZE) {
+                updateStatus('❌ 文件过大 (最大限制 10MB)，请通过其他方式传输', 'error');
+                cancelFileUpload();
+                return;
+            }
+            
+            const fileId = 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            const reader = new FileReader();
+            
+            // 显示发送中状态
+            chatSendBtn.disabled = true;
+            chatSendBtn.textContent = '发送中...';
+            
+            reader.onload = function(e) {
+                // 使用 setTimeout 将发送操作放到下一个宏任务，避免阻塞当前 UI 渲染
+                setTimeout(() => {
+                    try {
+                        const fileData = {
+                            fileId: fileId,
+                            fileName: selectedFile.name,
+                            fileType: selectedFile.type,
+                            fileSize: selectedFile.size,
+                            fileData: e.target.result,
+                            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        };
+                        
+                        // 发送到服务器
+                        if (ws && ws.readyState === WebSocket.OPEN) {
+                            ws.send(JSON.stringify({
+                                type: 'file-message',
+                                senderId: myId,
+                                ...fileData
+                            }));
+                            
+                            // 本地显示
+                            displayFileMessage(myId, fileData, true);
+                            updateStatus('✅ 文件发送成功', 'success');
+                        } else {
+                            updateStatus('❌ 发送失败：服务器连接已断开', 'error');
+                        }
+                    } catch (err) {
+                        console.error('发送文件失败:', err);
+                        updateStatus('❌ 发送文件出错，可能是文件过大导致内存不足', 'error');
+                    } finally {
+                        // 重置UI状态
+                        cancelFileUpload();
+                        chatSendBtn.textContent = '发送';
+                        updateSendButtonState();
+                    }
+                }, 0);
+            };
+            
+            reader.onerror = function() {
+                updateStatus('文件读取失败', 'error');
+                cancelFileUpload();
+                
+                // 恢复发送按钮状态
+                chatSendBtn.textContent = '发送';
+            };
+            
+            reader.readAsDataURL(selectedFile);
+        }
+        
+        // ==================== 格式化文件大小 ====================
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // ==================== 显示文件消息 ====================
+        function displayFileMessage(senderId, fileData, isLocal = false) {
+            // 隐藏空聊天提示
+            if (emptyChatMessage && !emptyChatMessage.classList.contains('hidden')) {
+                emptyChatMessage.classList.add('hidden');
+            }
+            
+            const senderName = isLocal ? '我' : `用户 ${senderId.substring(0, 6)}`;
+            
+            // 创建文件消息元素
+            const messageElement = document.createElement('div');
+            messageElement.className = `chat-message file ${isLocal ? 'local' : 'remote'}`;
+            
+            // 获取文件图标
+            function getFileIcon(fileType) {
+                if (fileType.startsWith('image/')) return '🖼️';
+                if (fileType.startsWith('video/')) return '🎬';
+                if (fileType.startsWith('audio/')) return '🎵';
+                if (fileType.includes('pdf')) return '📄';
+                if (fileType.includes('word')) return '📝';
+                if (fileType.includes('excel')) return '📊';
+                if (fileType.includes('zip') || fileType.includes('rar') || fileType.includes('7z')) return '📦';
+                return '📎';
+            }
+            
+            const fileIcon = getFileIcon(fileData.fileType);
+            const fileSize = formatFileSize(fileData.fileSize);
+            
+            messageElement.innerHTML = `
+                <div class="message-header">
+                    <div class="message-sender ${isLocal ? 'local' : 'remote'}">${senderName}</div>
+                    <div class="message-time ${isLocal ? 'local' : 'remote'}">${fileData.timestamp}</div>
+                </div>
+                <div class="file-message">
+                    <div class="file-info">
+                        <div class="file-icon">${fileIcon}</div>
+                        <div class="file-details">
+                            <div class="file-name" title="${fileData.fileName}">${fileData.fileName}</div>
+                            <div class="file-size">${fileSize}</div>
+                        </div>
+                    </div>
+                    <div class="file-actions">
+                        <a href="#" class="download-btn" data-file-id="${fileData.fileId}">下载文件</a>
+                    </div>
+                </div>
+            `;
+            
+            // 添加到消息容器
+            chatMessagesContainer.appendChild(messageElement);
+            
+            // 滚动到底部
+            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+            
+            // 添加下载事件监听器
+            const downloadBtn = messageElement.querySelector('.download-btn');
+            downloadBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                downloadFile(fileData);
+            });
+        }
+
+        // ==================== 下载文件 ====================
+        function downloadFile(fileData) {
+            try {
+                // 从Base64数据中提取实际的数据部分
+                const base64Data = fileData.fileData.split(',')[1] || fileData.fileData;
+                const byteCharacters = atob(base64Data);
+                const byteNumbers = new Array(byteCharacters.length);
+                
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: fileData.fileType });
+                const url = window.URL.createObjectURL(blob);
+                
+                // 创建下载链接
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileData.fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                // 释放URL对象
+                window.URL.revokeObjectURL(url);
+                
+                updateStatus(`正在下载: ${fileData.fileName}`, 'success');
+            } catch (err) {
+                console.error('文件下载失败:', err);
+                updateStatus('文件下载失败', 'error');
+            }
+        }
+        
+        // ==================== HTML转义函数 ====================
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
       
-        // ==================== 创建对等连接 ====================
+        // ==================== 创建对等连接 (优化版) ====================
+        let connectionPending = new Set(); // 正在创建中的连接，防止重复创建
+
         function createPeerConnection(peerId) {
             if (!isInMeeting) return null;
             
-            if (connections.has(peerId)) return connections.get(peerId);
+            if (connections.has(peerId)) {
+                const existingPc = connections.get(peerId);
+                if (['connected', 'completed', 'checking'].includes(existingPc.iceConnectionState)) {
+                    return existingPc;
+                }
+                closeConnection(peerId);
+            }
+
+            if (connectionPending.has(peerId)) return null;
+            connectionPending.add(peerId);
             
-            console.log(`创建与 ${peerId} 的对等连接`);
-            
-            const pc = new RTCPeerConnection({
+            console.log(`创建与 ${peerId} 的连接`);
+
+            try {
+                const pc = new RTCPeerConnection({
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
                     { urls: 'stun:stun1.l.google.com:19302' },
-                    { urls: 'stun:stun2.l.google.com:19302' }
-                ]
+                    { urls: 'stun:stun2.l.google.com:19302' },
+                    { urls: 'stun:stun3.l.google.com:19302' },
+                    { urls: 'stun:stun4.l.google.com:19302' },
+                    {
+                        urls: [
+                            'turn:openrelay.metered.ca:80',
+                            'turn:openrelay.metered.ca:443',
+                            'turn:openrelay.metered.ca:443?transport=tcp',
+                            'turns:openrelay.metered.ca:443'
+                        ],
+                        username: 'openrelayproject',
+                        credential: 'openrelayproject'
+                    }
+                ],
+                iceCandidatePoolSize: 10,
+                iceTransportPolicy: 'all',
+                sdpSemantics: 'unified-plan'
             });
-            
+                
+                pc.makingOffer = false;
             connections.set(peerId, pc);
-            
-            // ICE候选
-            pc.onicecandidate = (e) => {
-                if (e.candidate) {
-                    sendSignal(peerId, { candidate: e.candidate });
-                }
-            };
-            
-            // 远程轨道到达
-            pc.ontrack = (e) => {
-                console.log(`收到来自 ${peerId} 的轨道:`, e.track.kind);
+
+            // 使用更智能的连接超时
+                let connectionTimeout = null;
                 
-                if (e.streams && e.streams[0]) {
-                    const stream = e.streams[0];
-                    remoteStreams.set(peerId, stream);
-                    
-                    console.log(`更新远程流 ${peerId}，视频轨道数: ${stream.getVideoTracks().length}, 音频轨道数: ${stream.getAudioTracks().length}`);
-                    
-                    // 获取该用户的设备状态
-                    const cameraState = cameraStates.get(peerId) || false;
-                    const micState = micStates.get(peerId) || false;
-                    
-                    // 更新视频显示
-                    updateRemoteVideoStream(peerId, stream, cameraState);
-                }
-            };
-            
-            // 连接状态变化
-            pc.oniceconnectionstatechange = () => {
-                console.log(`ICE连接状态 [${peerId}]: ${pc.iceConnectionState}`);
-                
-                if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
-                    console.log(`✓ 与 ${peerId} 的连接已建立`);
-                    
-                    // 连接建立后发送当前设备状态
-                    if (isInMeeting) {
-                        sendDeviceStatus();
-                    }
-                    
-                    // 触发重新协商以确保所有轨道都正确添加
-                    setTimeout(() => {
-                        if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
-                            renegotiateConnection(pc, peerId);
-                        }
-                    }, 500);
-                    
-                } else if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
-                    console.log(`✗ 与 ${peerId} 的连接断开`);
-                    
-                    if (isInMeeting && members.has(peerId)) {
-                        setTimeout(() => {
-                            if (isInMeeting && members.has(peerId) && 
-                                connections.get(peerId) === pc && 
-                                pc.iceConnectionState !== 'connected' && 
-                                pc.iceConnectionState !== 'completed') {
-                                console.log(`尝试重新连接 ${peerId}...`);
+                const resetTimeout = () => {
+                    if (connectionTimeout) clearTimeout(connectionTimeout);
+                    connectionTimeout = setTimeout(() => {
+                        const currentState = pc.iceConnectionState;
+                        if (currentState !== 'connected' && currentState !== 'completed' && currentState !== 'checking') {
+                            const attempt = connectionAttempts.get(peerId) || 0;
+                            if (attempt < MAX_CONNECTION_ATTEMPTS && isInMeeting && members.has(peerId)) {
+                                connectionAttempts.set(peerId, attempt + 1);
+                                const delay = Math.min(2000 * Math.pow(1.5, attempt), 10000);
+                                setTimeout(() => {
+                                    if (isInMeeting && members.has(peerId)) {
+                                        closeConnection(peerId);
+                                        setTimeout(() => createPeerConnection(peerId), 500);
+                                    }
+                                }, delay);
+                            } else if (attempt >= MAX_CONNECTION_ATTEMPTS) {
                                 closeConnection(peerId);
-                                createPeerConnection(peerId);
                             }
-                        }, 3000);
+                        }
+                    }, 10000);
+                };
+                
+                resetTimeout();
+                
+                // ICE 候选发送
+                pc.onicecandidate = ({ candidate }) => {
+                    if (candidate) sendSignal(peerId, { candidate });
+                };
+                
+                // 远程轨道处理
+                pc.ontrack = (e) => {
+                    if (connectionTimeout) clearTimeout(connectionTimeout);
+                    let stream = remoteStreams.get(peerId) || new MediaStream();
+                    if (e.streams && e.streams[0]) {
+                        stream = e.streams[0];
+                    } else {
+                        const existingTrack = stream.getTracks().find(t => t.kind === e.track.kind);
+                        if (existingTrack) stream.removeTrack(existingTrack);
+                        stream.addTrack(e.track);
                     }
+                    remoteStreams.set(peerId, stream);
+
+                    if (e.track.kind === 'audio' && 'playoutDelayHint' in e.receiver) {
+                        e.receiver.playoutDelayHint = 0.1;
+                    }
+
+                    if (e.track.kind === 'video') {
+                        cameraStates.set(peerId, true);
+                        updateRemoteVideoStream(peerId, stream, true);
+                    }
+                };
+                
+                // 连接状态监控
+                pc.oniceconnectionstatechange = () => {
+                    trackConnectionAttempt(peerId, pc.iceConnectionState);
+
+                    if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+                        if (connectionTimeout) clearTimeout(connectionTimeout);
+                        startStatsMonitoring(pc, peerId);
+                        sendDeviceStatus();
+                        checkConnectionsStatus();
+                    } else if (pc.iceConnectionState === 'failed') {
+                        resetTimeout();
+                        pc.restartIce(); // 自动尝试 ICE 重启
+                    } else if (pc.iceConnectionState === 'disconnected') {
+                        pc.restartIce();
+                    } else if (pc.iceConnectionState === 'checking') {
+                        resetTimeout();
+                    }
+                };
+                
+                // 协商处理 (Perfect Negotiation + 防抖)
+                let negotiationTimer = null;
+                pc.onnegotiationneeded = () => {
+                    if (negotiationTimer) clearTimeout(negotiationTimer);
+                    negotiationTimer = setTimeout(async () => {
+                        if (pc.signalingState !== 'stable' || pc.makingOffer) return;
+                        
+                        try {
+                            pc.makingOffer = true;
+                            const offer = await pc.createOffer();
+                            const optimizedSDP = optimizeAudioSDP(offer.sdp);
+                            const offerDesc = { type: 'offer', sdp: optimizedSDP };
+                            await pc.setLocalDescription(offerDesc);
+                            sendSignal(peerId, { sdp: offerDesc });
+                        } catch (err) {
+                            console.error('协商失败:', err);
+                        } finally {
+                            pc.makingOffer = false;
+                        }
+                    }, 100);
+                };
+
+                // 初始添加轨道
+                if (myStream) {
+                    myStream.getTracks().forEach(track => {
+                        const exists = pc.getSenders().some(s => s.track === track);
+                        if (!exists) pc.addTrack(track, myStream);
+                    });
+                    updateConnectionTracks(pc);
+                }
+
+                return pc;
+            } finally {
+                connectionPending.delete(peerId);
+            }
+        }
+
+        // ==================== 更新连接中的媒体轨道（精简版）====================
+        async function updateConnectionTracks(pc) {
+            if (!pc || pc.signalingState === 'closed') return;
+
+            const senders = pc.getSenders();
+            const videoTrack = isCameraOn && myStream ? (myStream.getVideoTracks()[0] || null) : null;
+            const audioTrack = currentAudioTrack || null;
+
+            // 视频轨道处理
+            let videoSender = senders.find(s => s.track && s.track.kind === 'video');
+
+            if (videoTrack) {
+                if (videoSender) {
+                    if (videoSender.track !== videoTrack) {
+                        await videoSender.replaceTrack(videoTrack).catch(err => {
+                            console.error('替换视频轨道失败:', err);
+                            pc.removeTrack(videoSender);
+                            pc.addTrack(videoTrack, myStream);
+                        });
+                    }
+                } else {
+                    videoSender = pc.addTrack(videoTrack, myStream);
                 }
                 
-                checkConnectionsStatus();
-            };
-            
-            // 如果需要重新协商，创建offer
-            pc.onnegotiationneeded = () => {
-                console.log(`需要重新协商连接: ${peerId}`);
-                createOffer(peerId);
-            };
-            
-            // 立即创建初始offer
-            setTimeout(() => {
-                if (!connections.has(peerId) || connections.get(peerId) !== pc) return;
-                createOffer(peerId);
-            }, 100);
-            
-            return pc;
-        }
-        
-        // ==================== 重新协商连接 ====================
-        function renegotiateConnection(pc, peerId) {
-            if (!pc || pc.connectionState !== 'connected') return;
-            
-            console.log(`为连接 ${peerId} 触发重新协商`);
-            pc.createOffer({
-                offerToReceiveAudio: true,
-                offerToReceiveVideo: true
-            }).then(offer => {
-                return pc.setLocalDescription(offer);
-            }).then(() => {
-                sendSignal(peerId, { sdp: pc.localDescription });
-                console.log(`发送重新协商的offer给 ${peerId}`);
-            }).catch(err => {
-                console.error('重新协商失败:', err);
-            });
-        }
-        
-        // ==================== 更新连接中的媒体轨道 ====================
-        function updateConnectionTracks(pc) {
-            if (!myStream || !pc) return;
-            
-            const senders = pc.getSenders();
-            
-            // 更新视频轨道
-            const videoTracks = myStream.getVideoTracks();
-            const videoTrack = videoTracks.length > 0 ? videoTracks[0] : null;
-            
-            if (videoTrack && isCameraOn) {
-                const videoSender = senders.find(s => s.track && s.track.kind === 'video');
-                if (videoSender) {
-                    videoSender.replaceTrack(videoTrack).catch(err => {
-                        console.error('替换视频轨道失败:', err);
-                    });
-                } else {
-                    pc.addTrack(videoTrack, myStream);
+                // 动态调整视频编码参数
+                if (videoSender && videoSender.setParameters) {
+                    try {
+                        const parameters = videoSender.getParameters();
+                        if (!parameters.encodings) parameters.encodings = [{}];
+                        
+                        // 强制锁定分辨率，不允许浏览器自动降级
+                        // 'maintain-resolution' 告知浏览器：宁可降低帧率，也不要改动分辨率
+                        parameters.degradationPreference = 'maintain-resolution';
+                        
+                        // 显式指定缩放比例
+                        parameters.encodings[0].scaleResolutionDownBy = isHighLatencyMode ? 2.0 : 1.0;
+                        
+                        if (currentVideoSource === 'screen') {
+                            // 屏幕共享：高分辨率，中等帧率，较高码率
+                            parameters.encodings[0].maxBitrate = isHighLatencyMode ? 800000 : 2500000;
+                            parameters.encodings[0].minBitrate = isHighLatencyMode ? 300000 : 1000000;
+                            parameters.encodings[0].maxFramerate = isHighLatencyMode ? 12 : 15;
+                            if (videoTrack && 'contentHint' in videoTrack) videoTrack.contentHint = 'detail';
+                        } else {
+                            // 摄像头：弱网下稍微放宽限制，保证画质不至于太差
+                            // 将 250kbps 回调至 400kbps，帧率回调至 15fps
+                            parameters.encodings[0].maxBitrate = isHighLatencyMode ? 400000 : 2500000;
+                            parameters.encodings[0].minBitrate = isHighLatencyMode ? 150000 : 600000;
+                            parameters.encodings[0].maxFramerate = isHighLatencyMode ? 15 : 24;
+                            if (videoTrack && 'contentHint' in videoTrack) videoTrack.contentHint = 'motion';
+                        }
+                        
+                        parameters.encodings[0].priority = 'low';
+                        await videoSender.setParameters(parameters);
+                    } catch (e) {
+                        console.warn('设置视频参数失败:', e);
+                    }
                 }
-            } else {
-                const videoSender = senders.find(s => s.track && s.track.kind === 'video');
-                if (videoSender) {
-                    pc.removeTrack(videoSender);
-                }
+            } else if (videoSender) {
+                videoSender.replaceTrack(null).catch(() => {});
             }
-            
-            // 更新音频轨道
-            const audioTracks = myStream.getAudioTracks();
-            const audioTrack = audioTracks.length > 0 ? audioTracks[0] : null;
-            
-            if (audioTrack && isMicOn) {
-                const audioSender = senders.find(s => s.track && s.track.kind === 'audio');
+
+            // 音频轨道处理
+            let audioSender = senders.find(s => s.track && s.track.kind === 'audio');
+
+            if (audioTrack) {
                 if (audioSender) {
-                    audioSender.replaceTrack(audioTrack).catch(err => {
-                        console.error('替换音频轨道失败:', err);
-                    });
+                    if (audioSender.track !== audioTrack) {
+                        await audioSender.replaceTrack(audioTrack).catch(err => {
+                            console.error('替换音频轨道失败:', err);
+                            pc.removeTrack(audioSender);
+                            pc.addTrack(audioTrack, myStream);
+                        });
+                    }
                 } else {
-                    pc.addTrack(audioTrack, myStream);
+                    audioSender = pc.addTrack(audioTrack, myStream);
                 }
-            } else {
-                const audioSender = senders.find(s => s.track && s.track.kind === 'audio');
-                if (audioSender) {
-                    pc.removeTrack(audioSender);
+
+                // 为音频轨道设置高优先级
+                if (audioSender && audioSender.setParameters) {
+                    try {
+                        const parameters = audioSender.getParameters();
+                        if (!parameters.encodings) parameters.encodings = [{}];
+                        parameters.encodings[0].priority = 'high'; // 音频设为高优先级
+                        // 确保没有被限制码率
+                        delete parameters.encodings[0].maxBitrate;
+                        await audioSender.setParameters(parameters);
+                    } catch (e) {
+                        console.warn('设置音频参数失败:', e);
+                    }
                 }
+            } else if (audioSender) {
+                audioSender.replaceTrack(null).catch(() => {});
             }
         }
-      
-        // ==================== 创建Offer ====================
-        function createOffer(peerId) {
-            const pc = connections.get(peerId);
-            if (!pc) return;
-            
-            console.log(`为 ${peerId} 创建offer`);
-            
-            // 更新轨道
-            updateConnectionTracks(pc);
-            
-            pc.createOffer({
-                offerToReceiveAudio: true,
-                offerToReceiveVideo: true
-            }).then(offer => {
-                console.log(`创建offer成功:`, offer.type);
-                return pc.setLocalDescription(offer);
-            }).then(() => {
-                console.log(`发送offer给 ${peerId}`);
-                sendSignal(peerId, { sdp: pc.localDescription });
-            }).catch(err => {
-                console.error('创建offer失败:', err);
-            });
-        }
-      
         // ==================== 关闭连接 ====================
         function closeConnection(peerId) {
+            stopStatsMonitoring(peerId);
             const pc = connections.get(peerId);
             if (pc) {
                 pc.oniceconnectionstatechange = null;
                 pc.ontrack = null;
                 pc.onnegotiationneeded = null;
+                pc.onicecandidate = null;
                 pc.close();
                 connections.delete(peerId);
             }
             remoteStreams.delete(peerId);
+            pendingCandidates.delete(peerId);
             
             setTimeout(() => checkConnectionsStatus(), 100);
+        }
+
+        // ==================== 开启/关闭摄像头 ====================
+        // ==================== 连接成功率统计 ====================
+        let connectionStats = {
+            totalAttempts: 0,
+            successful: 0,
+            failed: 0
+        };
+
+        let activeAttempts = new Set(); // 防止状态变化重复计算
+
+        function trackConnectionAttempt(peerId, state) {
+            const key = `${peerId}-${myId}`; // 简单的会话标识
+
+            if (state === 'checking') {
+                if (!activeAttempts.has(key)) {
+                    connectionStats.totalAttempts++;
+                    activeAttempts.add(key);
+                }
+            } else if (state === 'connected' || state === 'completed') {
+                if (activeAttempts.has(key)) {
+                    connectionStats.successful++;
+                    activeAttempts.delete(key);
+                }
+            } else if (state === 'failed') {
+                if (activeAttempts.has(key)) {
+                    connectionStats.failed++;
+                    activeAttempts.delete(key);
+                }
+            }
         }
       
         // ==================== 开启/关闭摄像头 ====================
@@ -1302,14 +3403,13 @@
                 try {
                     videoStream = await navigator.mediaDevices.getUserMedia({
                         video: {
-                            width: { ideal: 640 },
-                            height: { ideal: 480 },
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 },
                             frameRate: { ideal: 24 }
                         },
-                        audio: false
+                        audio: false // 注意：这里不获取音频，音频由麦克风单独控制
                     });
                 } catch (err) {
-                    console.log('标准参数失败，尝试宽松参数...', err);
                     videoStream = await navigator.mediaDevices.getUserMedia({
                         video: true,
                         audio: false
@@ -1333,35 +3433,29 @@
                 // 添加新的视频轨道
                 myStream.addTrack(videoTrack);
                 
+                // 添加当前活动的音频轨道（如果有）
+                if (currentAudioTrack && !myStream.getAudioTracks().includes(currentAudioTrack)) {
+                    myStream.addTrack(currentAudioTrack);
+                }
+                
                 isCameraOn = true;
                 cameraStates.set(myId, true);
+                currentVideoSource = 'camera'; // 重置为摄像头
+                isScreenSharing = false; // 重置屏幕共享状态
                 
                 toggleCameraBtn.textContent = '已开启';
                 toggleCameraBtn.className = 'device-toggle-btn on';
                 updateStatus('📷 摄像头已开启', 'success');
-                
+
                 // 显示本地视频
                 showLocalVideo();
-                
-                // 更新所有连接的视频轨道
-                connections.forEach((pc, id) => {
-                    if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
-                        updateConnectionTracks(pc);
-                        
-                        // 触发重新协商以确保视频轨道被发送
-                        setTimeout(() => {
-                            if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
-                                renegotiateConnection(pc, id);
-                            }
-                        }, 100);
-                    }
+                connections.forEach((pc) => {
+                    updateConnectionTracks(pc);
                 });
-                
+
                 // 广播设备状态
                 sendDeviceStatus();
-                
-                console.log('摄像头已开启');
-                
+
             } catch (err) {
                 console.error('开启摄像头失败:', err);
                 handleCameraError(err);
@@ -1378,32 +3472,34 @@
                     myStream.removeTrack(track);
                 });
                 
+                // 如果是屏幕共享，停止屏幕共享
+                if (isScreenSharing) {
+                    if (screenStream) {
+                        screenStream.getTracks().forEach(track => track.stop());
+                        screenStream = null;
+                    }
+                    screenAudioTrack = null;
+                    isScreenSharing = false;
+                }
+                
                 isCameraOn = false;
                 cameraStates.set(myId, false);
+                currentVideoSource = 'camera'; // 重置为摄像头
                 
                 // 更新所有连接的视频轨道
-                connections.forEach((pc, id) => {
-                    if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
-                        updateConnectionTracks(pc);
-                        
-                        setTimeout(() => {
-                            if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
-                                renegotiateConnection(pc, id);
-                            }
-                        }, 100);
-                    }
+                connections.forEach((pc) => {
+                    updateConnectionTracks(pc);
                 });
-                
+
                 toggleCameraBtn.textContent = '已关闭';
                 toggleCameraBtn.className = 'device-toggle-btn off';
                 updateStatus('📷 摄像头已关闭', 'info');
                 
                 updateLocalVideoDisplay();
+                updateVideoOutputUI();
                 sendDeviceStatus();
-                
-                console.log('摄像头已关闭');
             }
-        }
+        }        
         
         // ==================== 处理摄像头错误 ====================
         function handleCameraError(err) {
@@ -1431,6 +3527,7 @@
             toggleCameraBtn.textContent = '已关闭';
             toggleCameraBtn.className = 'device-toggle-btn off';
             updateLocalVideoDisplay();
+            updateVideoOutputUI();
         }
         
         // ==================== 开启/关闭麦克风 ====================
@@ -1462,14 +3559,16 @@
                 try {
                     audioStream = await navigator.mediaDevices.getUserMedia({
                         audio: {
-                            echoCancellation: true,
-                            noiseSuppression: true,
-                            autoGainControl: true
+                            echoCancellation: { ideal: true },
+                            noiseSuppression: { ideal: true },
+                            autoGainControl: { ideal: true },
+                            channelCount: { ideal: 1 },
+                            sampleRate: { ideal: 48000 },
+                            sampleSize: { ideal: 16 }
                         },
                         video: false
                     });
                 } catch (err) {
-                    console.log('标准参数失败，尝试宽松参数...', err);
                     audioStream = await navigator.mediaDevices.getUserMedia({
                         audio: true,
                         video: false
@@ -1477,21 +3576,36 @@
                 }
                 
                 const audioTrack = audioStream.getAudioTracks()[0];
+                microphoneAudioTrack = audioTrack; // 保存麦克风音频轨道引用
+                
+                // 如果当前是屏幕共享且没有系统音频，使用麦克风音频
+                if (isScreenSharing && !screenAudioTrack) {
+                    currentAudioTrack = microphoneAudioTrack;
+                } else if (!isScreenSharing) {
+                    // 如果是摄像头模式，使用麦克风音频
+                    currentAudioTrack = microphoneAudioTrack;
+                }
                 
                 // 确保myStream存在
                 if (!myStream) {
                     myStream = new MediaStream();
                 }
                 
-                // 移除已有的音频轨道
+                // 移除已有的麦克风音频轨道
                 const existingAudioTracks = myStream.getAudioTracks();
                 existingAudioTracks.forEach(track => {
+                    if (track === microphoneAudioTrack || track === screenAudioTrack) {
+                        // 保留当前活动的音频轨道
+                        return;
+                    }
                     myStream.removeTrack(track);
                     track.stop();
                 });
                 
-                // 添加新的音频轨道
-                myStream.addTrack(audioTrack);
+                // 如果应该使用麦克风音频，添加到流中
+                if (currentAudioTrack === microphoneAudioTrack && !myStream.getAudioTracks().includes(microphoneAudioTrack)) {
+                    myStream.addTrack(microphoneAudioTrack);
+                }
                 
                 isMicOn = true;
                 micStates.set(myId, true);
@@ -1504,21 +3618,12 @@
                 connections.forEach((pc, id) => {
                     if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
                         updateConnectionTracks(pc);
-                        
-                        // 触发重新协商以确保音频轨道被发送
-                        setTimeout(() => {
-                            if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
-                                renegotiateConnection(pc, id);
-                            }
-                        }, 100);
                     }
                 });
-                
+
                 // 广播设备状态
                 sendDeviceStatus();
-                
-                console.log('麦克风已开启');
-                
+
             } catch (err) {
                 console.error('开启麦克风失败:', err);
                 handleMicrophoneError(err);
@@ -1531,38 +3636,43 @@
         
         // ==================== 关闭麦克风 ====================
         async function turnOffMicrophone() {
-            if (myStream) {
-                const audioTracks = myStream.getAudioTracks();
-                
-                audioTracks.forEach(track => {
-                    track.stop();
-                    myStream.removeTrack(track);
-                });
-                
-                isMicOn = false;
-                micStates.set(myId, false);
-                
-                // 更新所有连接的音频轨道
-                connections.forEach((pc, id) => {
-                    if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
-                        updateConnectionTracks(pc);
-                        
-                        setTimeout(() => {
-                            if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
-                                renegotiateConnection(pc, id);
-                            }
-                        }, 100);
-                    }
-                });
-                
-                toggleMicBtn.textContent = '已关闭';
-                toggleMicBtn.className = 'device-toggle-btn off';
-                updateStatus('🎤 麦克风已关闭', 'info');
-                
-                sendDeviceStatus();
-                
-                console.log('麦克风已关闭');
+            isMicOn = false;
+            micStates.set(myId, false);
+
+            // 先判断是否在用麦克风音频，再置null
+            const wasUsingMic = (currentAudioTrack === microphoneAudioTrack);
+
+            if (microphoneAudioTrack) {
+                microphoneAudioTrack.stop();
+                // 从流中移除麦克风音频轨道
+                if (myStream) {
+                    myStream.getAudioTracks().forEach(track => {
+                        if (track === microphoneAudioTrack) {
+                            myStream.removeTrack(track);
+                        }
+                    });
+                }
+                microphoneAudioTrack = null;
             }
+
+            // 切换到其他音频源（如果有）
+            if (wasUsingMic) {
+                if (isScreenSharing && screenAudioTrack) {
+                    currentAudioTrack = screenAudioTrack;
+                } else {
+                    currentAudioTrack = null;
+                }
+            }
+            
+            // 更新所有连接的音频轨道
+            connections.forEach((pc) => {
+                updateConnectionTracks(pc);
+            });
+            
+            toggleMicBtn.textContent = '已关闭';
+            toggleMicBtn.className = 'device-toggle-btn off';
+            updateStatus('🎤 麦克风已关闭', 'info');
+            sendDeviceStatus();
         }
         
         // ==================== 处理麦克风错误 ====================
@@ -1586,12 +3696,32 @@
         }
       
         // ==================== 加入会议 ====================
-        function joinMeeting() {
+        async function joinMeeting() {
             if (ws && ws.readyState === WebSocket.OPEN) {
+                // 确保WebSocket连接稳定
+                if (!isConnected) {
+                    updateStatus('请等待服务器连接稳定', 'error');
+                    return;
+                }
+                
+                // 先设置会议状态，再执行其他操作
                 isInMeeting = true;
                 joinMeetingBtn.disabled = true;
                 leaveMeetingBtn.disabled = false;
-                conferenceInfo.classList.remove('hidden');
+
+                // 重置 QoS 累计统计
+                isHighLatencyMode = false;
+                sessionStatsAccumulator = {
+                    rttSum: 0,
+                    rttSamples: 0,
+                    maxLatency: 0,
+                    lastPeerLoss: new Map()
+                };
+                
+                // 显示聊天区域
+                chatSection.classList.add('visible');
+                chatInput.disabled = false;
+                chatSendBtn.disabled = false;
                 
                 if (!members.has(myId)) {
                     members.add(myId);
@@ -1600,64 +3730,188 @@
                     stateSequence.set(myId, myStateSequence);
                 }
                 
+                // 先发送加入请求，让服务器知道我们加入
                 ws.send(JSON.stringify({ type: 'join' }));
-                updateStatus('🤝 正在加入会议...', 'info');
-                
-                showLocalVideo();
-                
+                updateStatus('👤 正在加入会议...', 'info');
+
+                // 请求成员列表（服务器收到 join 后会广播，这里稍作延迟确保服务端处理完）
                 setTimeout(() => {
-                    sendDeviceStatus();
-                }, 500);
-                
+                    if (ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({ type: 'get-members' }));
+                    }
+                }, 100);
+
+                // 显示本地视频
+                showLocalVideo();
+
+                // 立即广播当前设备状态，让其他成员尽快知道摄像头/麦克风状态
+                sendDeviceStatus();
+
+                // 启动 QoS 定期上报（每 5 秒）
+                if (qosReportInterval) clearInterval(qosReportInterval);
+                qosReportInterval = setInterval(() => {
+                    if (ws && ws.readyState === WebSocket.OPEN && isInMeeting) {
+                        const payload = collectQoSSnapshot();
+                        ws.send(JSON.stringify({ type: 'performance-report', ...payload }));
+                    }
+                }, 5000);
+
                 emptyState.classList.add('hidden');
                 updateParticipantsList();
-                
-                console.log(`加入会议，摄像头状态: ${isCameraOn ? '开启' : '关闭'}, 麦克风状态: ${isMicOn ? '开启' : '关闭'}`);
+                updateUIState();
             }
         }
       
         // ==================== 离开会议 ====================
-        function leaveMeeting() {
-            isInMeeting = false;
-            joinMeetingBtn.disabled = false;
-            leaveMeetingBtn.disabled = true;
-            conferenceInfo.classList.add('hidden');
-            
-            if (connectionCheckTimer) {
-                clearTimeout(connectionCheckTimer);
-                connectionCheckTimer = null;
+		function leaveMeeting() {
+            // 停止所有本地媒体轨道（重要：释放摄像头和麦克风）
+            if (myStream) {
+                myStream.getTracks().forEach(track => track.stop());
+                myStream = null;
             }
-            
-            connections.forEach((pc, id) => {
-                closeConnection(id);
-            });
-            
-            connections.clear();
-            remoteStreams.clear();
-            
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ type: 'leave' }));
+            if (microphoneAudioTrack) {
+                microphoneAudioTrack.stop();
+                microphoneAudioTrack = null;
             }
-            
-            updateStatus('👋 已离开会议', 'info');
-            
-            members.delete(myId);
-            cameraStates.delete(myId);
-            micStates.delete(myId);
-            stateSequence.delete(myId);
-            updateParticipantsList();
-            
-            removeAllRemoteVideos();
-            
-            const videoContainers = videoGrid.querySelectorAll('.video-container');
-            if (videoContainers.length === 0) {
-                emptyState.classList.remove('hidden');
+            if (screenAudioTrack) {
+                screenAudioTrack.stop();
+                screenAudioTrack = null;
             }
+            currentAudioTrack = null;
             
-            conferenceStatus.textContent = '已连接服务器';
-            setTimeout(() => checkConnectionsStatus(), 200);
+			// 停止 QoS 定期上报
+			if (qosReportInterval) {
+				clearInterval(qosReportInterval);
+				qosReportInterval = null;
+			}
+
+			// 先发送性能报告（在关闭连接之前）
+			if (ws && ws.readyState === WebSocket.OPEN && isInMeeting) {
+				const payload = collectQoSSnapshot();
+				payload.leaveReason = 'normal';
+
+				ws.send(JSON.stringify({ type: 'performance-report', ...payload }));
+			}
+
+			// 标记已发送，防止 beforeunload 重复发送
+			qosBeaconSent = true;
+			isHighLatencyMode = false;
+			
+			// 更新状态
+			isInMeeting = false;
+			joinMeetingBtn.disabled = false;
+			leaveMeetingBtn.disabled = true;
+			
+			// 隐藏聊天区域
+			chatSection.classList.remove('visible');
+			chatInput.disabled = true;
+			chatSendBtn.disabled = true;
+			
+			// 清除所有连接尝试记录
+			connectionAttempts.clear();
+			
+			if (connectionCheckTimer) {
+				clearInterval(connectionCheckTimer);
+				connectionCheckTimer = null;
+			}
+			
+			// 关闭所有P2P连接
+			connections.forEach((pc, id) => {
+				closeConnection(id);
+			});
+			connections.clear();
+			remoteStreams.clear();
+			
+			// 发送离开消息
+			if (ws && ws.readyState === WebSocket.OPEN) {
+				ws.send(JSON.stringify({ type: 'leave' }));
+			}
+			
+			updateStatus('👋 已离开会议', 'info');
+			
+			members.delete(myId);
+			cameraStates.delete(myId);
+			micStates.delete(myId);
+			stateSequence.delete(myId);
+			updateParticipantsList();
+			
+			removeAllRemoteVideos();
+			
+			const videoContainers = videoGrid.querySelectorAll('.video-container');
+			if (videoContainers.length === 0) {
+				emptyState.classList.remove('hidden');
+			}
+			
+			conferenceStatus.textContent = '已连接服务器';
+			
+			updateUIState();
+			restoreAllZoomOnLeave();
+		}
+
+        // ==================== 移除所有视频容器（新增） ====================
+        function removeAllVideoContainers() {
+            const allContainers = videoGrid.querySelectorAll('.video-container');
+            allContainers.forEach(container => container.remove());
         }
-      
+
+
+        // ==================== 状态验证与同步 ====================
+        function validateAndSyncState() {
+            if (!isInMeeting) return;
+
+            // 获取 DOM 中的所有视频容器 ID
+            const domVideoIds = new Set();
+            videoGrid.querySelectorAll('.video-container').forEach(container => {
+                const id = container.id.replace('video-container-', '');
+                domVideoIds.add(id);
+            });
+
+            // 检查 members 中有但 DOM 中没有的（需要创建视频容器）
+            members.forEach(id => {
+                if (!domVideoIds.has(id)) {
+                    if (id === myId) {
+                        showLocalVideo();
+                    } else {
+                        createRemoteVideoContainer(id);
+                    }
+                }
+            });
+
+            // 检查 DOM 中有但 members 中没有的（需要移除）
+            domVideoIds.forEach(id => {
+                if (!members.has(id)) {
+                    removeVideoElement(id);
+                }
+            });
+
+            // 修复断掉的 P2P 连接：遍历其他成员，检查连接状态
+            members.forEach(id => {
+                if (id === myId) return;
+                const pc = connections.get(id);
+                const badStates = ['failed', 'closed'];
+                if (!pc || badStates.includes(pc.iceConnectionState) || badStates.includes(pc.connectionState)) {
+                    closeConnection(id);
+                    connectionAttempts.set(id, 0);
+                    createPeerConnection(id);
+                }
+            });
+
+            // 验证参与者列表数量
+            const participantItems = participantsList.querySelectorAll('.participant-item').length;
+            if (participantItems !== members.size) {
+                updateParticipantsList();
+            }
+
+            
+        }
+
+        // 定期验证状态同步（每10秒）
+        setInterval(() => {
+            if (isInMeeting) {
+                validateAndSyncState();
+            }
+        }, 10000);
+
         // ==================== 更新状态显示 ====================
         function updateStatus(text, type = 'info') {
             statusBar.textContent = text;
@@ -1715,30 +3969,47 @@
       
         // ==================== 显示本地视频 ====================
         function showLocalVideo() {
+            // 清理所有 ID 不匹配当前 myId 的本地容器（重连后 myId 变更时防止重复画面）
+            videoGrid.querySelectorAll('.video-container.local').forEach(container => {
+                if (container.id !== `video-container-${myId}`) {
+                    console.warn(`⚠️ 移除过期本地视频容器: ${container.id}`);
+                    container.remove();
+                }
+            });
+
             let localVideoContainer = document.getElementById(`video-container-${myId}`);
-            
+
             if (!localVideoContainer) {
                 localVideoContainer = document.createElement('div');
                 localVideoContainer.id = `video-container-${myId}`;
                 localVideoContainer.className = 'video-container local';
-                
+
                 const videoElement = document.createElement('video');
                 videoElement.id = `video-${myId}`;
                 videoElement.autoplay = true;
                 videoElement.playsInline = true;
                 videoElement.muted = true;
-                
+
                 const labelElement = document.createElement('div');
                 labelElement.className = 'video-label local';
-                
+
                 localVideoContainer.appendChild(videoElement);
                 localVideoContainer.appendChild(labelElement);
                 videoGrid.appendChild(localVideoContainer);
+
+                // 添加双击放大事件
+                videoElement.addEventListener('dblclick', function(e) {
+                    e.stopPropagation();
+                    const videoContainer = this.closest('.video-container');
+                    if (videoContainer) {
+                        toggleVideoZoom(videoContainer);
+                    }
+                });
             }
-            
+
             const videoElement = document.getElementById(`video-${myId}`);
             const labelElement = localVideoContainer.querySelector('.video-label');
-            
+
             if (myStream && isCameraOn) {
                 videoElement.srcObject = myStream;
                 videoElement.play().catch(e => {
@@ -1747,13 +4018,22 @@
             } else {
                 videoElement.srcObject = null;
             }
-            
-            labelElement.innerHTML = `
-                <span class="status-indicator ${isInMeeting ? 'online' : 'offline'}"></span>
-                我 (${myId}) ${isInMeeting ? '· 会议中' : ''}
-            `;
-            
+
+            // 根据当前视频源更新标签
+            if (currentVideoSource === 'screen' && isScreenSharing) {
+                labelElement.innerHTML = `
+                    <span class="status-indicator ${isInMeeting ? 'online' : 'offline'}"></span>
+                    我 (${myId}) · 屏幕共享
+                `;
+            } else {
+                labelElement.innerHTML = `
+                    <span class="status-indicator ${isInMeeting ? 'online' : 'offline'}"></span>
+                    我 (${myId}) ${isInMeeting ? '· 会议中' : ''}
+                `;
+            }
+
             updateLocalVideoDisplay();
+            emptyState.classList.add('hidden');
         }
       
         // ==================== 更新本地视频显示 ====================
@@ -1762,65 +4042,96 @@
         }
         
         // ==================== 创建远程视频容器 ====================
-        function createRemoteVideoContainer(peerId) {
-            console.log(`为 ${peerId} 创建远程视频容器`);
-            
-            let videoContainer = document.getElementById(`video-container-${peerId}`);
-            if (!videoContainer) {
-                videoContainer = document.createElement('div');
-                videoContainer.id = `video-container-${peerId}`;
-                videoContainer.className = 'video-container';
-                
-                const videoElement = document.createElement('video');
-                videoElement.id = `video-${peerId}`;
-                videoElement.autoplay = true;
-                videoElement.playsInline = true;
-                videoElement.muted = false;
-                
-                const labelElement = document.createElement('div');
-                labelElement.className = 'video-label';
-                
-                videoContainer.appendChild(videoElement);
-                videoContainer.appendChild(labelElement);
-                videoGrid.appendChild(videoContainer);
-                
-                console.log(`为 ${peerId} 创建了新的视频容器`);
-            }
-            
-            emptyState.classList.add('hidden');
-            
-            const cameraState = cameraStates.get(peerId) || false;
-            updateVideoDisplay(peerId, cameraState);
-        }
+		function createRemoteVideoContainer(peerId) {
+			console.log(`为 ${peerId} 创建远程视频容器`);
+			
+			let videoContainer = document.getElementById(`video-container-${peerId}`);
+			if (!videoContainer) {
+				videoContainer = document.createElement('div');
+				videoContainer.id = `video-container-${peerId}`;
+				videoContainer.className = 'video-container';
+				
+				const videoElement = document.createElement('video');
+				videoElement.id = `video-${peerId}`;
+				videoElement.autoplay = true;
+				videoElement.playsInline = true;
+                videoElement.setAttribute('autoplay', '');
+                videoElement.setAttribute('playsinline', '');
+                videoElement.setAttribute('muted', ''); // 默认静音以确保自动播放，由 updateRemoteVideoStream 恢复
+				videoElement.muted = false;
+                videoElement.style.backgroundColor = '#1a1a1a'; // 预设深色背景
+                videoElement.style.transition = 'opacity 0.3s ease'; // 添加淡入效果
+				
+				videoElement.addEventListener('dblclick', function(e) {
+					e.stopPropagation();
+					const container = this.closest('.video-container');
+					if (container) {
+						toggleVideoZoom(container);
+					}
+				});
+				
+				const labelElement = document.createElement('div');
+				labelElement.className = 'video-label';
+				
+				videoContainer.appendChild(videoElement);
+				videoContainer.appendChild(labelElement);
+				videoGrid.appendChild(videoContainer);
+				
+				emptyState.classList.add('hidden');
+			}
+			
+			const cameraState = cameraStates.get(peerId) || false;
+			updateVideoDisplay(peerId, cameraState);
+		}
         
-        // ==================== 更新远程视频流 ====================
+        // ==================== 更新远程视频流（精简版）====================
         function updateRemoteVideoStream(peerId, stream, cameraState) {
-            console.log(`更新远程视频流: ${peerId}，摄像头状态: ${cameraState}`);
-            
             let videoContainer = document.getElementById(`video-container-${peerId}`);
             if (!videoContainer) {
                 createRemoteVideoContainer(peerId);
                 videoContainer = document.getElementById(`video-container-${peerId}`);
             }
-            
+
             const videoElement = document.getElementById(`video-${peerId}`);
-            if (videoElement) {
+            if (!videoElement) return;
+
+            // 设置 srcObject 并尝试加载
+            if (videoElement.srcObject !== stream) {
                 videoElement.srcObject = stream;
-                
-                videoElement.play().catch(e => {
-                    console.log(`播放远程视频失败 ${peerId}:`, e);
-                    setTimeout(() => {
-                        if (videoElement && videoElement.srcObject) {
-                            videoElement.play().catch(e2 => {
-                                console.log(`重试播放远程视频失败 ${peerId}:`, e2);
-                            });
-                        }
-                    }, 500);
-                });
-                
-                updateVideoDisplay(peerId, cameraState);
+                videoElement.load(); // 显式调用 load 触发加载流程
             }
-            
+
+            // 增强播放逻辑
+            const playVideo = async () => {
+                if (!videoElement.paused) return; // 已经在播放
+                try {
+                    await videoElement.play();
+                } catch (e) {
+                    if (e.name === 'NotAllowedError') {
+                        videoElement.muted = true;
+                        await videoElement.play().catch(() => {});
+                    }
+                }
+            };
+
+            // 监听 stream 中所有 track 的状态
+            stream.getTracks().forEach(track => {
+                // 处理从黑屏到有画面的切换
+                track.onunmute = () => playVideo();
+                if (track.readyState === 'live' && !track.muted) {
+                    playVideo();
+                }
+            });
+
+            // 监听元数据加载完成
+            videoElement.onloadedmetadata = () => playVideo();
+
+            // 立即尝试播放
+            if (videoElement.readyState >= 2) {
+                playVideo();
+            }
+
+            updateVideoDisplay(peerId, cameraState);
             emptyState.classList.add('hidden');
         }
         
@@ -1830,8 +4141,6 @@
             if (!videoContainer) return;
             
             const videoElement = document.getElementById(`video-${userId}`);
-            
-            console.log(`更新视频显示 ${userId}: 摄像头${isCameraOn ? '开启' : '关闭'}`);
             
             const existingOverlays = videoContainer.querySelectorAll('.camera-off-overlay');
             existingOverlays.forEach(overlay => overlay.remove());
@@ -1871,9 +4180,151 @@
                 `;
             }
         }
+
+        // ==================== 双击视频放缩 ====================
+        // 初始化双击放大功能
+        function initDoubleClickZoom() {
+            // 监听视频区域的双击事件
+            videoGrid.addEventListener('dblclick', function(e) {
+                // 找到被双击的视频容器
+                let videoContainer = e.target.closest('.video-container');
+                if (videoContainer) {
+                    toggleVideoZoom(videoContainer);
+                }
+            });
+            
+            // 也可以监听视频元素本身的双击事件
+            document.addEventListener('dblclick', function(e) {
+                if (e.target.tagName === 'VIDEO') {
+                    let videoContainer = e.target.closest('.video-container');
+                    if (videoContainer) {
+                        toggleVideoZoom(videoContainer);
+                    }
+                }
+            });
+        }
+
+        // 切换视频放大/恢复
+        function toggleVideoZoom(videoContainer) {
+            if (!videoContainer) return;
+            
+            const videoId = videoContainer.id.replace('video-container-', '');
+            
+            if (isVideoZoomed && zoomedVideoId === videoId) {
+                // 如果当前已经放大的是这个视频，则恢复
+                restoreVideoZoom();
+            } else {
+                // 放大选中的视频
+                zoomVideo(videoContainer, videoId);
+            }
+        }
+
+        // 放大视频
+        function zoomVideo(videoContainer, videoId) {
+            // 如果已经有视频放大了，先恢复
+            if (isVideoZoomed) {
+                restoreVideoZoom();
+            }
+            
+            // 添加放大类
+            videoContainer.classList.add('zoomed');
+            
+            // 添加关闭按钮
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'zoom-close-btn';
+            closeBtn.innerHTML = '✕';
+            closeBtn.onclick = function(e) {
+                e.stopPropagation();
+                restoreVideoZoom();
+            };
+            videoContainer.appendChild(closeBtn);
+            
+            // 更新状态
+            zoomedVideoId = videoId;
+            isVideoZoomed = true;
+            
+            // 添加蒙层
+            videoGrid.classList.add('has-zoomed');
+            
+            // 禁用滚动
+            document.body.style.overflow = 'hidden';
+            
+            // 在标签上添加"已放大"提示
+            const label = videoContainer.querySelector('.video-label');
+            if (label) {
+                const originalHtml = label.innerHTML;
+                label.setAttribute('data-original-html', originalHtml);
+                
+                if (videoId === myId) {
+                    label.innerHTML = `
+                        <span class="status-indicator online"></span>
+                        我 (${videoId}) · 已放大
+                    `;
+                } else {
+                    label.innerHTML = `
+                        <span class="status-indicator online"></span>
+                        参与者 (${videoId}) · 已放大
+                    `;
+                }
+            }
+            
+            }
+
+        // 恢复视频大小
+        function restoreVideoZoom() {
+            if (!isVideoZoomed) return;
+            
+            // 找到放大的视频容器
+            const zoomedContainer = document.querySelector('.video-container.zoomed');
+            if (zoomedContainer) {
+                // 移除放大类
+                zoomedContainer.classList.remove('zoomed');
+                
+                // 移除关闭按钮
+                const closeBtn = zoomedContainer.querySelector('.zoom-close-btn');
+                if (closeBtn) {
+                    closeBtn.remove();
+                }
+                
+                // 恢复原始标签
+                const label = zoomedContainer.querySelector('.video-label');
+                if (label && label.hasAttribute('data-original-html')) {
+                    label.innerHTML = label.getAttribute('data-original-html');
+                    label.removeAttribute('data-original-html');
+                }
+            }
+            
+            // 移除蒙层
+            videoGrid.classList.remove('has-zoomed');
+            
+            // 恢复滚动
+            document.body.style.overflow = '';
+            
+            // 重置状态
+            zoomedVideoId = null;
+            isVideoZoomed = false;
+            
+            }
+
+        // 在移除视频元素时检查是否需要恢复放大状态
+        function checkAndRestoreZoomOnRemove(videoId) {
+            if (isVideoZoomed && zoomedVideoId === videoId) {
+                restoreVideoZoom();
+            }
+        }
+
+        // 在离开会议时恢复所有放大状态
+        function restoreAllZoomOnLeave() {
+            if (isVideoZoomed) {
+                restoreVideoZoom();
+            }
+        }
+
       
         // ==================== 移除视频元素 ====================
         function removeVideoElement(peerId) {
+            // 检查是否需要恢复放大状态
+            checkAndRestoreZoomOnRemove(peerId);
             const el = document.getElementById(`video-container-${peerId}`);
             if (el) el.remove();
         }
@@ -1899,6 +4350,29 @@
             stateSequence.clear();
             myStateSequence = 0;
             remoteStreams.clear();
+            chatMessages = [];
+            peerStatsData.clear();
+            pendingCandidates.clear();
+
+            if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
+            wsReconnectAttempts = 0;
+            qosBeaconSent = false;
+            
+            // 重置视频输出相关状态
+            isScreenSharing = false;
+            currentVideoSource = 'camera';
+            if (screenStream) {
+                screenStream.getTracks().forEach(track => track.stop());
+                screenStream = null;
+            }
+            
+            // 重置音频轨道
+            if (microphoneAudioTrack) {
+                microphoneAudioTrack.stop();
+                microphoneAudioTrack = null;
+            }
+            screenAudioTrack = null;
+            currentAudioTrack = null;
             
             if (connectionCheckTimer) {
                 clearTimeout(connectionCheckTimer);
@@ -1914,6 +4388,7 @@
             }
             
             removeAllRemoteVideos();
+            restoreAllZoomOnLeave();
             
             toggleCameraBtn.disabled = true;
             toggleMicBtn.disabled = true;
@@ -1922,14 +4397,53 @@
             toggleMicBtn.textContent = '已关闭';
             toggleMicBtn.className = 'device-toggle-btn off';
             
+            // 新增：重置视频输出切换按钮
+            toggleVideoOutputBtn.disabled = true;
+            toggleVideoOutputBtn.innerHTML = '<span class="video-output-icon">📷</span><span class="video-output-text">视频输出源切换</span>';
+            
             joinMeetingBtn.disabled = true;
             leaveMeetingBtn.disabled = true;
+            
+            // 重置聊天区域
+            chatSection.classList.remove('visible');
+            chatInput.disabled = true;
+            chatSendBtn.disabled = true;
+            chatInput.value = '';
+            chatMessagesContainer.innerHTML = '';
+            emptyChatMessage.classList.remove('hidden');
             
             participantCount.textContent = '0';
             participantsList.innerHTML = '';
             
             emptyState.classList.remove('hidden');
             updateLocalVideoDisplay();
+        
+            // 重置聊天相关状态
+            selectedFile = null;
+            chatInput.value = '';
+            chatSendBtn.disabled = true;
+            chatSendBtn.textContent = '发送';
+            
+            // 重置文件预览区域
+            const filePreviewArea = document.getElementById('filePreviewArea');
+            if (filePreviewArea) {
+                filePreviewArea.style.display = 'none';
+            }
+            
+            // 确保文本输入框可见
+            const chatInputElement = document.getElementById('chatInput');
+            if (chatInputElement) {
+                chatInputElement.style.display = 'block';
+            }
+            
+            // 重置文件输入
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput) {
+                fileInput.value = '';
+            }
+            
+            // 关闭视频输出弹窗
+            videoOutputPopup.classList.remove('show');
         }
       
         // ==================== 更新UI状态 ====================
@@ -1952,10 +4466,116 @@
                 toggleMicBtn.textContent = '已关闭';
                 toggleMicBtn.className = 'device-toggle-btn off';
             }
+
+            // 新增：更新视频输出切换按钮状态
+            updateVideoOutputUI();
+
+            updateSendButtonState();
         }
+
+        // 添加键盘快捷键支持：按ESC键退出放大状态
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && isVideoZoomed) {
+                restoreVideoZoom();
+            }
+        });
+
+        // 点击蒙层也可以退出放大状态
+        videoGrid.addEventListener('click', function(e) {
+            if (isVideoZoomed && e.target === this && this.classList.contains('has-zoomed')) {
+                restoreVideoZoom();
+            }
+        });
       
         // ==================== 页面加载初始化 ====================
         document.addEventListener('DOMContentLoaded', init);
+
+        // ==================== QoS 数据收集（优化版）====================
+        function collectQoSSnapshot() {
+            // 计算整个会话期间所有连接的平均延迟 (Session-wide Time-weighted Average)
+            // 如果没有任何有效样本，则显示 -1 表示不可用
+            const avgLatency = sessionStatsAccumulator.rttSamples > 0 
+                ? Math.round(sessionStatsAccumulator.rttSum / sessionStatsAccumulator.rttSamples) 
+                : -1;
+
+            // 计算所有 Peer 的平均累计丢包率
+            let totalLoss = 0;
+            let peerCount = 0;
+            sessionStatsAccumulator.lastPeerLoss.forEach((loss) => {
+                totalLoss += loss;
+                peerCount++;
+            });
+            const avgLoss = peerCount > 0 ? parseFloat((totalLoss / peerCount).toFixed(1)) : 0;
+
+            // 计算连接成功率
+            // 如果总尝试次数为 0，则根据当前连接状态判断：如果 members 还有人但没尝试，成功率为 0
+            let successRate = 100;
+            if (connectionStats.totalAttempts > 0) {
+                successRate = parseFloat(((connectionStats.successful / connectionStats.totalAttempts) * 100).toFixed(1));
+            } else if (members.size > 1) {
+                successRate = 0; // 即使 members 有人但没尝试成功过，视为 0
+            }
+
+            return {
+                clientId: myId,
+                connectionSuccessRate: successRate,
+                avgLatency: avgLatency,
+                maxLatency: Math.round(sessionStatsAccumulator.maxLatency),
+                avgPacketLoss: avgLoss,
+                leaveReason: 'normal'
+            };
+        }
+
+        // ==================== sendBeacon QoS 上报（页面卸载兜底） ====================
+        let qosBeaconSent = false;
+
+        function sendQoSBeacon(reason) {
+            if (!isInMeeting || !myId || qosBeaconSent) return;
+            qosBeaconSent = true;
+
+            const payload = collectQoSSnapshot();
+            payload.leaveReason = reason;
+
+            const serverBase = serverUrlInput.value.trim()
+                .replace('wss://', 'https://')
+                .replace('ws://', 'http://');
+            const url = serverBase.replace(/\/$/, '') + '/qos-beacon';
+
+            const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+            navigator.sendBeacon(url, blob);
+            
+        }
+
+        // visibilitychange：切标签页/手机切后台时触发
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                sendQoSBeacon('visibility-hidden');
+            }
+        });
+
+        // beforeunload：关闭标签页/刷新时触发
+        window.addEventListener('beforeunload', () => {
+            sendQoSBeacon('page-unload');
+        });
+
+        // ==================== 性能面板点击切换透明/显示 ====================
+        (function() {
+            const videoGrid = document.getElementById('videoGrid');
+            if (!videoGrid) return;
+        
+            // 监听 videoGrid 上的所有点击事件，判断是否点中了性能面板
+            videoGrid.addEventListener('click', function(e) {
+                const panel = e.target.closest('.stats-overlay');
+                if (!panel) return;
+        
+                e.stopPropagation(); // 阻止事件冒泡，避免干扰双击放大等
+        
+                // 切换透明类（opacity: 0，但保留占位可点击）
+                panel.classList.toggle('transparent');
+        
+                // 可选：打印调试信息，确认点击事件触发
+                });
+        })();
     </script>
 </body>
 </html>
