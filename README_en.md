@@ -18,7 +18,7 @@
 This is a web-based multi-person video conferencing application implemented based on WebRTC technology and Mesh architecture, using WebSocket as the signaling server. It supports real-time audio and video communication among multiple clients (up to four clients) on the same local area network (LAN) or across LANs over the public network. The project includes complete front-end functional pages and a back-end signaling server, ready to use out of the box, suitable for learning and expanding WebRTC-related technologies. The front-end page after actual operation is as follows:
 
 ![Program Running Screenshot](pictures/basic.png)
-> *Tips: The initial version V1.0 is displayed on the homepage, subsequent updates are in the release under this repository, and new features can be found at the end of the document or on the blog, which will be continuously optimized~*
+> *Tips: The latest version is displayed on the homepage hub, subsequent old updates like V2.0 to V4.0 are in the **release** under this repository, and new features description can be found at the end of the document or on the blog, which will be continuously optimized~*
 
 ## Functional Features
 - 🎥 Supports multi-person real-time video conferencing with a Mesh network structure, where participants establish direct P2P connections
