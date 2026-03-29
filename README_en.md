@@ -28,6 +28,7 @@ This is a web-based multi-person video conferencing application implemented base
 - 📊 Whether in the conference or not, clients can view the real-time displayed and updated list of participants and user IDs
 - 🎯 A concise and intuitive user interface, updated the black background in the P2P project to a gradient blue-purple color, and optimized the overall layout
 - 🔄 Automatically handles ICE candidates and SDP negotiation, uses HTTPS and WSS secure connections to ensure secure conference communication
+> *tips：these functional features above are from Version 1.0 ，read this README second half and see more new functions~*
 
 ## Technology Stack
 ### Frontend
