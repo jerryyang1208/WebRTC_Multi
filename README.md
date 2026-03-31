@@ -129,6 +129,18 @@
 ## 公网连接
 上述提供的网址链接均为供本地主机的局域网内设备联网访问，如果需要跨局域网连接，通过公网 IP 实现，系统作为毕业设计项目，在公网部署方面采用了轻量级的 Ngrok 内网穿透方案，而非企业级的云服务器部署。Ngrok 是一款开源的内网穿透工具，能够将本地服务器暴露到公网，无需购买昂贵的云服务器即可实现多端公网测试。这种方案具有成本低、配置简单、即开即用的特点，非常适合毕业设计等资源受限场景。
 
+Ngrok 服务配置流程如下：
+- 在官网注册好 Ngrok 账号后就进入了 Ngrok 的仪表板页面，在左侧边栏找到 Your Authtoken，接着我们打开 PowerShell 切换到下载并安装在本地的 ngrok.exe 所在目录，设置认证令牌。
+- 在终端运行项目程序后，开另一个终端执行.\ngrok.exe http https://localhost:8888 --host-header="localhost:8888"将本地 8888 端口映射到公网即可。
+- Ngrok 会自动分配一个公网URL域名如图https://traceried-lacunaris-loris.ngrok-free.dev。
+- 前端网页修改 WebSocket 连接地址为 Ngrok 提供的公网域名，即可实现跨网络访问。
+
+![程序运行截图](pictures/Ngrok.png)
+
+Ngrok 方案的优缺点分析：
+- 优点：零成本、配置简单、自动 HTTPS、支持 WebSocket 长连接、实时流量监控面板。
+- 缺点：免费版有带宽限制（约 40Mbps）、连接数限制、每次重启 Ngrok 会重新分配域名、延迟略高于云服务器直连。
+
 # 联系咨询
 
 笔者博客 https://www.zhihu.com/people/13-73-62-89-19
