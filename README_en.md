@@ -129,6 +129,22 @@ Subsequently, the Perfect Negotiation signaling mechanism combined with exponent
 - **Audio Layer Optimization**: Opus encoding optimization (FEC/DTX/bitrate limiting) with high-priority transmission set, ensuring smooth voice communication in weak network environments.
 - **Video Layer Optimization**: Dynamically adjusts bitrate and frame rate based on scenarios (screen sharing/camera) to avoid bandwidth contention.
 
+## Public Network Connection
+
+The URLs provided above are for local access by devices within the same local area network. To enable cross-LAN connections via public IP addresses, this graduation project adopts a lightweight Ngrok intranet penetration solution rather than enterprise-level cloud server deployment. Ngrok is an open-source intranet penetration tool that exposes local servers to the public network, eliminating the need for expensive cloud servers to enable multi-end public network testing. This approach features low cost, simple configuration, and ready-to-use functionality, making it ideal for resource-constrained scenarios such as graduation projects.
+
+The Ngrok service configuration process is as follows:
+- After registering a Ngrok account, navigate to the dashboard and locate "Your Authtoken" in the sidebar. Open PowerShell, switch to the directory where ngrok.exe is installed, and set the authentication token.
+- Run the project program in one terminal, then open another terminal and execute `.\ngrok.exe http https://localhost:8888 --host-header="localhost:8888"` to map the local port 8888 to the public network.
+- Ngrok automatically assigns a public URL domain, such as `https://traceried-lacunaris-loris.ngrok-free.dev`.
+- Modify the WebSocket connection address in the frontend webpage to the public domain provided by Ngrok to enable cross-network access.
+
+![Program Running Screenshot](pictures/Ngrok.png)
+
+Advantages and Disadvantages of the Ngrok Solution:
+- Advantages: Zero cost, simple configuration, automatic HTTPS, support for WebSocket persistent connections, real-time traffic monitoring dashboard.
+- Disadvantages: Free version has bandwidth limitations (approximately 40 Mbps), connection restrictions, domain reassignment upon each Ngrok restart, and slightly higher latency compared to direct cloud server connections.
+
 # Contact & Consultation
 
 Author's Blog https://www.zhihu.com/people/13-73-62-89-19
