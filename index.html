@@ -307,14 +307,17 @@
             min-width: 180px;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            display: none;
+            display: flex;
             flex-direction: column;
             gap: 8px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
         }
         
         .video-output-popup.show {
-            display: flex;
-            animation: fadeIn 0.3s ease;
+            opacity: 1;
+            visibility: visible;
         }
         
         .video-output-option {
@@ -1600,7 +1603,7 @@
             
             // 聊天相关事件监听
             chatInput.addEventListener('keypress', handleChatKeyPress);
-            chatSendBtn.addEventListener('click', sendChatMessage);
+            chatSendBtn.addEventListener('click', sendMessage);
             document.getElementById('fileInput').addEventListener('change', handleFileSelect);
             document.getElementById('cancelFileBtn').addEventListener('click', cancelFileUpload);
             document.addEventListener('keydown', handleGlobalKeyDown);
@@ -2315,7 +2318,8 @@
                 return;
             }
             
-            videoOutputPopup.classList.toggle('show');
+            // 显示弹窗
+            videoOutputPopup.classList.add('show');
             
             // 更新选项激活状态
             videoOutputOptions.forEach(option => {
@@ -2789,12 +2793,18 @@
             const filePreviewName = filePreviewArea.querySelector('.file-preview-name');
             const filePreviewSize = filePreviewArea.querySelector('.file-preview-size');
             
+            // 确保元素存在
+            if (!chatInput || !filePreviewArea || !filePreviewName || !filePreviewSize) {
+                console.error('文件传输相关元素未找到');
+                return;
+            }
+            
             chatInput.style.display = 'none';
             chatInput.value = ''; // 清空文本输入
             
             filePreviewName.textContent = file.name;
             filePreviewSize.textContent = formatFileSize(file.size);
-            filePreviewArea.style.display = 'block';
+            filePreviewArea.style.display = 'flex'; // 使用flex布局确保显示正确
 
             // 将焦点设置到文件预览区域，这样可以直接按 Enter 发送
             filePreviewArea.focus();
@@ -3455,6 +3465,9 @@
 
                 // 广播设备状态
                 sendDeviceStatus();
+
+                // 更新视频输出UI
+                updateVideoOutputUI();
 
             } catch (err) {
                 console.error('开启摄像头失败:', err);
