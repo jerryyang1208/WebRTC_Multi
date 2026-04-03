@@ -370,7 +370,7 @@ server.listen(PORT, () => {
 // 心跳检测 (针对移动端优化，延长超时时间)
 const heartbeatInterval = setInterval(() => {
     clients.forEach((client, clientId) => {
-        if (client.missedHeartbeats >= 3) { // 连续 3 次未响应才断开
+        if (client.missedHeartbeats >= 3) { // 连续3次未响应才断开
             console.log(`💀 心跳超时 (${client.missedHeartbeats}次)，断开死连接: ${clientId}`);
             if (client.isInMeeting) {
                 client.isInMeeting = false;
@@ -392,7 +392,7 @@ const heartbeatInterval = setInterval(() => {
             client.ws.ping();
         }
     });
-}, 10000); // 10 秒检查一次，累计 30 秒超时断联
+}, 10000); // 10秒检查一次，累计30秒超时
 
 wss.on('close', () => {
     clearInterval(heartbeatInterval);
