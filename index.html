@@ -1516,6 +1516,26 @@
         let reconnectAttempts = 0;
         const MAX_RECONNECT_ATTEMPTS = 5;
         let isReconnecting = false;
+        
+        // 心跳相关
+        let heartbeatInterval = null;
+        const HEARTBEAT_INTERVAL = 30000; // 30秒
+        let lastHeartbeat = 0;
+        
+        // 消息队列和重试
+        let messageQueue = [];
+        let isProcessingQueue = false;
+        const MAX_RETRY = 3;
+        
+        // 网络状态监控
+        let networkQuality = 'good'; // good, poor, bad
+        let lastNetworkCheck = 0;
+        const NETWORK_CHECK_INTERVAL = 60000; // 1分钟
+        
+        // 状态同步相关
+        let lastMembersUpdate = 0;
+        const MEMBER_SYNC_INTERVAL = 5000; // 5秒同步一次成员状态
+        let pendingStateUpdates = [];
 
         // QoS 累计统计
         let sessionStatsAccumulator = {
@@ -1542,25 +1562,11 @@
         // 文件传输相关
         let selectedFile = null;
         let fileReaders = new Map(); // 存储正在读取的文件
-        let fileReceiptState = new Map(); // 用于跟踪文件接收状态，防止重复显示
         
         // 视频输出切换与放大相关变量
         let isScreenSharing = false;
         let currentVideoSource = 'camera'; // 'camera' 或 'screen'
         let isHighLatencyMode = false;     // 高延迟模式 (降级分辨率)
-        
-        // 消息传输优化
-        let messageQueue = []; // 消息队列
-        let messageProcessing = false; // 消息处理状态
-        const MESSAGE_PRIORITY = {
-            SIGNAL: 0, // 最高优先级
-            DEVICE_STATUS: 1,
-            CHAT: 2,
-            FILE: 3, // 最低优先级
-            PING: 4
-        };
-        const MAX_RETRY_ATTEMPTS = 3; // 最大重试次数
-        const RETRY_DELAY = 1000; // 重试延迟
         let latencyHistory = [];           // 新增：延迟历史记录，用于平滑抖动
         const LATENCY_THRESHOLD = 250;     // 优化：降低延迟阈值 (由300ms降至250ms) 以更灵敏地响应弱网
         const HYSTERESIS_SAMPLES = 5;      // 新增：连续N个样本满足条件才切换模式
@@ -1727,6 +1733,11 @@
                 if (ws.readyState === WebSocket.OPEN) {
                     ws.send(JSON.stringify({ type: 'get-members' }));
                 }
+                
+                // 启动心跳
+                startHeartbeat();
+                // 启动网络状态检测
+                startNetworkMonitoring();
             };
 
             ws.onmessage = (e) => {
@@ -1745,6 +1756,9 @@
                 connectBtn.textContent = '连接服务器';
                 connectBtn.style.background = 'linear-gradient(90deg, #4776E6, #8E54E9)';
 
+                // 停止心跳
+                stopHeartbeat();
+                
                 // 无论是否在会议中，都清理 pendingCandidates（重连后 peer ID 全部失效）
                 pendingCandidates.clear();
 
@@ -1794,6 +1808,73 @@
                     connectBtn.disabled = false;
                 }
             };
+        }
+        
+        // ==================== 心跳机制 ====================
+        function startHeartbeat() {
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+            
+            heartbeatInterval = setInterval(() => {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    try {
+                        ws.send(JSON.stringify({ type: 'ping' }));
+                        lastHeartbeat = Date.now();
+                    } catch (error) {
+                        console.error('发送心跳失败:', error);
+                    }
+                }
+            }, HEARTBEAT_INTERVAL);
+        }
+        
+        function stopHeartbeat() {
+            if (heartbeatInterval) {
+                clearInterval(heartbeatInterval);
+                heartbeatInterval = null;
+            }
+        }
+        
+        // ==================== 网络状态监控 ====================
+        function startNetworkMonitoring() {
+            checkNetworkQuality();
+            setInterval(checkNetworkQuality, NETWORK_CHECK_INTERVAL);
+        }
+        
+        function checkNetworkQuality() {
+            const now = Date.now();
+            if (now - lastHeartbeat > HEARTBEAT_INTERVAL * 1.5) {
+                networkQuality = 'bad';
+                isHighLatencyMode = true;
+                updateStatus('⚠️ 网络状态较差，已切换到高延迟模式', 'info');
+            } else if (now - lastHeartbeat > HEARTBEAT_INTERVAL * 1.2) {
+                networkQuality = 'poor';
+                isHighLatencyMode = true;
+            } else {
+                networkQuality = 'good';
+                isHighLatencyMode = false;
+            }
+        }
+        
+        // ==================== 消息队列处理 ====================
+        function sendMessageWithRetry(message, retries = 0) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                if (retries < MAX_RETRY) {
+                    setTimeout(() => {
+                        sendMessageWithRetry(message, retries + 1);
+                    }, 1000 * (retries + 1));
+                }
+                return;
+            }
+            
+            try {
+                ws.send(JSON.stringify(message));
+            } catch (error) {
+                console.error('发送消息失败:', error);
+                if (retries < MAX_RETRY) {
+                    setTimeout(() => {
+                        sendMessageWithRetry(message, retries + 1);
+                    }, 1000 * (retries + 1));
+                }
+            }
         }
 
         // ==================== 性能监控模块 ====================
@@ -1949,348 +2030,237 @@
             `;
         }
       
-        // ==================== 自适应码率(ABR)算法 ====================
-        function calculateBitrateSettings(latency, packetLoss, isScreenShare) {
-            // 基于网络状况计算合适的编码参数
-            let maxBitrate, minBitrate, maxFramerate, scaleResolutionDownBy;
-            
-            // 根据延迟和丢包率确定网络质量等级
-            let networkQuality = 'excellent';
-            if (latency > 500 || packetLoss > 5) {
-                networkQuality = 'poor';
-            } else if (latency > 300 || packetLoss > 2) {
-                networkQuality = 'fair';
-            } else if (latency > 150 || packetLoss > 0.5) {
-                networkQuality = 'good';
-            }
-            
-            // 根据网络质量和视频源类型设置编码参数
-            if (isScreenShare) {
-                switch (networkQuality) {
-                    case 'excellent':
-                        maxBitrate = 3000000; // 3Mbps
-                        minBitrate = 1500000; // 1.5Mbps
-                        maxFramerate = 15;
-                        scaleResolutionDownBy = 1.0;
-                        break;
-                    case 'good':
-                        maxBitrate = 2000000; // 2Mbps
-                        minBitrate = 1000000; // 1Mbps
-                        maxFramerate = 12;
-                        scaleResolutionDownBy = 1.0;
-                        break;
-                    case 'fair':
-                        maxBitrate = 1000000; // 1Mbps
-                        minBitrate = 500000;  // 500Kbps
-                        maxFramerate = 10;
-                        scaleResolutionDownBy = 1.5;
-                        break;
-                    case 'poor':
-                        maxBitrate = 600000;  // 600Kbps
-                        minBitrate = 300000;  // 300Kbps
-                        maxFramerate = 8;
-                        scaleResolutionDownBy = 2.0;
-                        break;
-                }
-            } else {
-                // 摄像头视频
-                switch (networkQuality) {
-                    case 'excellent':
-                        maxBitrate = 2500000; // 2.5Mbps
-                        minBitrate = 800000;  // 800Kbps
-                        maxFramerate = 24;
-                        scaleResolutionDownBy = 1.0;
-                        break;
-                    case 'good':
-                        maxBitrate = 1500000; // 1.5Mbps
-                        minBitrate = 600000;  // 600Kbps
-                        maxFramerate = 20;
-                        scaleResolutionDownBy = 1.0;
-                        break;
-                    case 'fair':
-                        maxBitrate = 800000;  // 800Kbps
-                        minBitrate = 300000;  // 300Kbps
-                        maxFramerate = 15;
-                        scaleResolutionDownBy = 1.5;
-                        break;
-                    case 'poor':
-                        maxBitrate = 500000;  // 500Kbps
-                        minBitrate = 200000;  // 200Kbps
-                        maxFramerate = 10;
-                        scaleResolutionDownBy = 2.0;
-                        break;
-                }
-            }
-            
-            return { maxBitrate, minBitrate, maxFramerate, scaleResolutionDownBy };
-        }
-
-        // 更新连接的媒体轨道编码参数
-        function updateConnectionTracks(pc) {
-            if (!pc || pc.connectionState === 'closed') return;
-            
-            try {
-                // 获取最新的网络状态
-                let latency = 0;
-                let packetLoss = 0;
-                
-                // 简单获取会话级别的网络状态
-                if (latencyHistory.length > 0) {
-                    latency = latencyHistory.reduce((a, b) => a + b) / latencyHistory.length;
-                }
-                
-                if (sessionStatsAccumulator.lastPeerLoss.size > 0) {
-                    const lossValues = Array.from(sessionStatsAccumulator.lastPeerLoss.values());
-                    packetLoss = lossValues.reduce((a, b) => a + b) / lossValues.length;
-                }
-                
-                // 遍历所有发送轨道
-                pc.getSenders().forEach(sender => {
-                    if (sender.track && sender.track.kind === 'video') {
-                        const isScreenShare = sender.track.label.includes('screen');
-                        const settings = calculateBitrateSettings(latency, packetLoss, isScreenShare);
-                        
-                        // 更新编码参数
-                        sender.setParameters({
-                            encodings: [{
-                                maxBitrate: settings.maxBitrate,
-                                minBitrate: settings.minBitrate,
-                                maxFramerate: settings.maxFramerate,
-                                scaleResolutionDownBy: settings.scaleResolutionDownBy
-                            }]
-                        }).catch(e => console.warn('更新编码参数失败:', e));
-                    }
-                });
-            } catch (e) {
-                console.error('更新媒体轨道参数失败:', e);
-            }
-        }
-
         // ==================== 消息处理 ====================
         function handleMessage(msg) {
-            try {
-                switch (msg.type) {
-                    case 'id': {
-                        const oldId = myId;
-                        myId = msg.id;
-                        // 重连时旧 ID 已失效：移除旧视频容器、清理所有旧 ID 相关状态
-                        if (oldId && oldId !== myId) {
-                            const oldContainer = document.getElementById(`video-container-${oldId}`);
-                            if (oldContainer) oldContainer.remove();
-                            members.delete(oldId);
-                            cameraStates.delete(oldId);
-                            micStates.delete(oldId);
-                            stateSequence.delete(oldId);
-                            // 旧 ID 的 pendingCandidates 全部失效，清除防止泄漏
-                            pendingCandidates.delete(oldId);
-                        }
-                        updateParticipantsList();
-                        break;
+            switch (msg.type) {
+                case 'id': {
+                    const oldId = myId;
+                    myId = msg.id;
+                    // 重连时旧 ID 已失效：移除旧视频容器、清理所有旧 ID 相关状态
+                    if (oldId && oldId !== myId) {
+                        const oldContainer = document.getElementById(`video-container-${oldId}`);
+                        if (oldContainer) oldContainer.remove();
+                        members.delete(oldId);
+                        cameraStates.delete(oldId);
+                        micStates.delete(oldId);
+                        stateSequence.delete(oldId);
+                        // 旧 ID 的 pendingCandidates 全部失效，清除防止泄漏
+                        pendingCandidates.delete(oldId);
                     }
-                        
+                    updateParticipantsList();
+                    break;
+                }
+                    
                     case 'members':
-                        const newMembers = new Set(msg.members);
+                    const newMembers = new Set(msg.members);
 
-                        if (isInMeeting && !newMembers.has(myId)) {
-                            newMembers.add(myId);
+                    if (isInMeeting && !newMembers.has(myId)) {
+                        newMembers.add(myId);
+                    }
+
+                    const leftMembers = Array.from(members).filter(id => !newMembers.has(id));
+                    leftMembers.forEach(id => {
+                        members.delete(id);
+                        cameraStates.delete(id);
+                        micStates.delete(id);
+                        stateSequence.delete(id);
+                        removeVideoElement(id);
+                        closeConnection(id);
+                    });
+
+                    const joinedMembers = Array.from(newMembers).filter(id => !members.has(id));
+                    joinedMembers.forEach(id => {
+                        members.add(id);
+                        if (!cameraStates.has(id)) cameraStates.set(id, false);
+                        if (!micStates.has(id)) micStates.set(id, false);
+                        if (!stateSequence.has(id)) stateSequence.set(id, 0);
+                    });
+
+                    members = newMembers;
+
+                    members.forEach(id => {
+                        if (!cameraStates.has(id)) cameraStates.set(id, false);
+                        if (!micStates.has(id)) micStates.set(id, false);
+                        if (!stateSequence.has(id)) stateSequence.set(id, 0);
+                    });
+
+                    updateParticipantsList();
+
+                    if (connectionCheckTimer) {
+                        clearInterval(connectionCheckTimer);
+                        connectionCheckTimer = null;
+                    }
+
+                    if (isInMeeting) {
+                        const otherMembers = Array.from(members).filter(id => id !== myId);
+
+                        if (otherMembers.length === 0) {
+                            updateStatus('✓ 已加入会议（当前只有您一人）', 'success');
+                            conferenceStatus.textContent = '会议中 (1人在线)';
+                        } else {
+                            updateStatus(`正在建立与${otherMembers.length}个参与者的P2P连接...`, 'info');
+
+                            // 统一处理：确保每个成员都有连接和视频容器
+                            otherMembers.forEach(id => {
+                                if (!connections.has(id)) {
+                                    connectionAttempts.set(id, 0);
+                                    createPeerConnection(id);
+                                }
+                                if (!document.getElementById(`video-container-${id}`)) {
+                                    createRemoteVideoContainer(id);
+                                }
+                            });
+
+                            connectionCheckTimer = setInterval(checkConnectionsStatus, 5000);
                         }
+                    }
 
-                        const leftMembers = Array.from(members).filter(id => !newMembers.has(id));
-                        leftMembers.forEach(id => {
-                            members.delete(id);
-                            cameraStates.delete(id);
-                            micStates.delete(id);
-                            stateSequence.delete(id);
-                            removeVideoElement(id);
-                            closeConnection(id);
-                        });
+                    // 延迟验证状态同步
+                    setTimeout(() => {
+                        validateAndSyncState();
+                    }, 1000);
+                    break;
 
-                        const joinedMembers = Array.from(newMembers).filter(id => !members.has(id));
-                        joinedMembers.forEach(id => {
-                            members.add(id);
-                            if (!cameraStates.has(id)) cameraStates.set(id, false);
-                            if (!micStates.has(id)) micStates.set(id, false);
-                            if (!stateSequence.has(id)) stateSequence.set(id, 0);
-                        });
-
-                        members = newMembers;
-
-                        members.forEach(id => {
-                            if (!cameraStates.has(id)) cameraStates.set(id, false);
-                            if (!micStates.has(id)) micStates.set(id, false);
-                            if (!stateSequence.has(id)) stateSequence.set(id, 0);
-                        });
+                case 'user-join':
+                    if (msg.id !== myId) {
+                        members.add(msg.id);
+                        if (!cameraStates.has(msg.id)) cameraStates.set(msg.id, false);
+                        if (!micStates.has(msg.id)) micStates.set(msg.id, false);
+                        if (!stateSequence.has(msg.id)) stateSequence.set(msg.id, 0);
 
                         updateParticipantsList();
-
-                        if (connectionCheckTimer) {
-                            clearInterval(connectionCheckTimer);
-                            connectionCheckTimer = null;
-                        }
 
                         if (isInMeeting) {
-                            const otherMembers = Array.from(members).filter(id => id !== myId);
-
-                            if (otherMembers.length === 0) {
-                                updateStatus('✓ 已加入会议（当前只有您一人）', 'success');
-                                conferenceStatus.textContent = '会议中 (1人在线)';
-                            } else {
-                                updateStatus(`正在建立与${otherMembers.length}个参与者的P2P连接...`, 'info');
-
-                                // 统一处理：确保每个成员都有连接和视频容器
-                                otherMembers.forEach(id => {
-                                    if (!connections.has(id)) {
-                                        connectionAttempts.set(id, 0);
-                                        try {
-                                            createPeerConnection(id);
-                                        } catch (error) {
-                                            console.error(`创建连接失败 for ${id}:`, error);
-                                        }
-                                    }
-                                    if (!document.getElementById(`video-container-${id}`)) {
-                                        try {
-                                            createRemoteVideoContainer(id);
-                                        } catch (error) {
-                                            console.error(`创建视频容器失败 for ${id}:`, error);
-                                        }
-                                    }
-                                });
-
-                                connectionCheckTimer = setInterval(checkConnectionsStatus, 5000);
+                            if (!connections.has(msg.id)) {
+                                connectionAttempts.set(msg.id, 0);
+                                createPeerConnection(msg.id);
                             }
-                        }
-
-                        // 延迟验证状态同步
-                        setTimeout(() => {
-                            try {
-                                validateAndSyncState();
-                            } catch (error) {
-                                console.error('验证状态同步失败:', error);
+                            if (!document.getElementById(`video-container-${msg.id}`)) {
+                                createRemoteVideoContainer(msg.id);
                             }
-                        }, 1000);
-                        break;
-
-                    case 'user-join':
-                        if (msg.id !== myId) {
-                            members.add(msg.id);
-                            if (!cameraStates.has(msg.id)) cameraStates.set(msg.id, false);
-                            if (!micStates.has(msg.id)) micStates.set(msg.id, false);
-                            if (!stateSequence.has(msg.id)) stateSequence.set(msg.id, 0);
-
-                            updateParticipantsList();
-
-                            if (isInMeeting) {
-                                if (!connections.has(msg.id)) {
-                                    connectionAttempts.set(msg.id, 0);
-                                    try {
-                                        createPeerConnection(msg.id);
-                                    } catch (error) {
-                                        console.error(`创建连接失败 for ${msg.id}:`, error);
-                                    }
-                                }
-                                if (!document.getElementById(`video-container-${msg.id}`)) {
-                                    try {
-                                        createRemoteVideoContainer(msg.id);
-                                    } catch (error) {
-                                        console.error(`创建视频容器失败 for ${msg.id}:`, error);
-                                    }
-                                }
-                                updateStatus(`正在与 ${msg.id.substring(0,6)} 建立连接...`, 'info');
-                            }
-                        }
-                        break;
-
-                    case 'user-leave':
-                        members.delete(msg.id);
-                        cameraStates.delete(msg.id);
-                        micStates.delete(msg.id);
-                        stateSequence.delete(msg.id);
-                        closeConnection(msg.id);
-
-                        // 移除视频元素
-                        removeVideoElement(msg.id);
-
-                        // 更新 UI
-                        updateParticipantsList();
-                        checkConnectionsStatus();
-
-                        // 如果没有其他参与者了，显示空状态
-                        const otherMembers = Array.from(members).filter(id => id !== myId);
-                        if (otherMembers.length === 0 && isInMeeting) {
-                            updateStatus('✓ 会议中只剩您一人', 'info');
-                        }
-                        break;
-                        
-                    case 'signal':
-                        if (msg.from && msg.data) {
-                            try {
-                                handleSignal(msg.from, msg.data);
-                            } catch (error) {
-                                console.error('处理信令失败:', error);
-                            }
-                        }
-                        break;
-                        
-                    case 'device-status':
-                        if (msg.userId && msg.cameraOn !== undefined && msg.micOn !== undefined && msg.sequence !== undefined) {
-                            try {
-                                const currentSeq = stateSequence.get(msg.userId) || 0;
-                                
-                                if (msg.sequence > currentSeq) {
-                                    stateSequence.set(msg.userId, msg.sequence);
-                                    cameraStates.set(msg.userId, msg.cameraOn);
-                                    micStates.set(msg.userId, msg.micOn);
-                                    updateVideoDisplay(msg.userId, msg.cameraOn);
-                                    updateParticipantsList();
-                                }
-                            } catch (error) {
-                                console.error('处理设备状态失败:', error);
-                            }
-                        }
-                        break;
-                        
-                    case 'chat-message':
-                        if (msg.senderId && msg.message) {
-                            try {
-                                displayChatMessage(msg.senderId, msg.message, msg.timestamp);
-                            } catch (error) {
-                                console.error('显示聊天消息失败:', error);
-                            }
-                        }
-                        break;
-
-                    case 'file-message':
-                    if (msg.senderId && msg.fileName) {
-                        try {
-                            // 检查是否是最后一块
-                            if (msg.isLast) {
-                                // 检查是否已经显示过该文件
-                                const fileKey = `${msg.senderId}_${msg.fileId}`;
-                                if (!fileReceiptState.has(fileKey)) {
-                                    // 标记为已显示
-                                    fileReceiptState.set(fileKey, true);
-                                    // 显示文件消息
-                                    displayFileMessage(msg.senderId, {
-                                        fileId: msg.fileId,
-                                        fileName: msg.fileName,
-                                        fileType: msg.fileType,
-                                        fileSize: msg.fileSize,
-                                        fileData: msg.fileData,
-                                        timestamp: msg.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                                    }, false);
-                                }
-                            }
-                        } catch (error) {
-                            console.error('处理文件消息失败:', error);
+                            updateStatus(`正在与 ${msg.id.substring(0,6)} 建立连接...`, 'info');
                         }
                     }
                     break;
-                }
-            } catch (error) {
-                console.error('处理消息失败:', error);
+
+                case 'user-leave':
+                    members.delete(msg.id);
+                    cameraStates.delete(msg.id);
+                    micStates.delete(msg.id);
+                    stateSequence.delete(msg.id);
+                    closeConnection(msg.id);
+
+                    // 移除视频元素
+                    removeVideoElement(msg.id);
+
+                    // 更新 UI
+                    updateParticipantsList();
+                    checkConnectionsStatus();
+
+                    // 如果没有其他参与者了，显示空状态
+                    const otherMembers = Array.from(members).filter(id => id !== myId);
+                    if (otherMembers.length === 0 && isInMeeting) {
+                        updateStatus('✓ 会议中只剩您一人', 'info');
+                    }
+                    break;
+                    
+                case 'signal':
+                    if (msg.from && msg.data) {
+                        handleSignal(msg.from, msg.data);
+                    }
+                    break;
+                    
+                case 'device-status':
+                    if (msg.userId && msg.cameraOn !== undefined && msg.micOn !== undefined && msg.sequence !== undefined) {
+                        const currentSeq = stateSequence.get(msg.userId) || 0;
+                        
+                        if (msg.sequence > currentSeq) {
+                            stateSequence.set(msg.userId, msg.sequence);
+                            cameraStates.set(msg.userId, msg.cameraOn);
+                            micStates.set(msg.userId, msg.micOn);
+                            updateVideoDisplay(msg.userId, msg.cameraOn);
+                            updateParticipantsList();
+                        }
+                    }
+                    break;
+                    
+                case 'chat-message':
+                    if (msg.senderId && msg.message) {
+                        displayChatMessage(msg.senderId, msg.message, msg.timestamp);
+                    }
+                    break;
+
+                case 'file-message':
+                    if (msg.senderId && msg.fileName && msg.fileData) {
+                        displayFileMessage(msg.senderId, {
+                            fileId: msg.fileId,
+                            fileName: msg.fileName,
+                            fileType: msg.fileType,
+                            fileSize: msg.fileSize,
+                            fileData: msg.fileData,
+                            timestamp: msg.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        }, false);
+                    }
+                    break;
             }
         }
       
+        // ==================== 状态同步 ====================
+        function validateAndSyncState() {
+            if (!isInMeeting) return;
+            
+            const otherMembers = Array.from(members).filter(id => id !== myId);
+            
+            // 确保每个成员都有连接和视频容器
+            otherMembers.forEach(id => {
+                if (!connections.has(id)) {
+                    connectionAttempts.set(id, 0);
+                    createPeerConnection(id);
+                }
+                if (!document.getElementById(`video-container-${id}`)) {
+                    createRemoteVideoContainer(id);
+                }
+                if (!cameraStates.has(id)) cameraStates.set(id, false);
+                if (!micStates.has(id)) micStates.set(id, false);
+                if (!stateSequence.has(id)) stateSequence.set(id, 0);
+            });
+            
+            // 清理不存在的成员的连接和状态
+            const currentMembers = new Set([...members, myId]);
+            connections.forEach((pc, id) => {
+                if (!currentMembers.has(id)) {
+                    closeConnection(id);
+                }
+            });
+            
+            cameraStates.forEach((state, id) => {
+                if (!currentMembers.has(id)) {
+                    cameraStates.delete(id);
+                }
+            });
+            
+            micStates.forEach((state, id) => {
+                if (!currentMembers.has(id)) {
+                    micStates.delete(id);
+                }
+            });
+            
+            stateSequence.forEach((seq, id) => {
+                if (!currentMembers.has(id)) {
+                    stateSequence.delete(id);
+                }
+            });
+            
+            updateParticipantsList();
+        }
+        
+        // 定期同步状态
+        setInterval(() => {
+            if (isInMeeting && Date.now() - lastMembersUpdate > MEMBER_SYNC_INTERVAL) {
+                validateAndSyncState();
+            }
+        }, MEMBER_SYNC_INTERVAL);
+        
         // ==================== 检查连接状态 ====================
         let connectionAttempts = new Map(); // 记录每个peer的连接尝试次数
         const MAX_CONNECTION_ATTEMPTS = 3;
@@ -2352,7 +2322,7 @@
             }
         }
       
-        // ==================== 处理信令消息 (优化版 Perfect Negotiation 模式) ====================
+        // ==================== 处理信令消息 (Perfect Negotiation 模式) ====================
         async function handleSignal(from, data) {
             if (!isInMeeting) return;
 
@@ -2376,36 +2346,18 @@
 
                     // 如果是 Polite 端且存在冲突，需要回滚本地 Offer 以接受对方的 Offer
                     if (offerCollision) {
-                        try {
-                            await pc.setLocalDescription({ type: 'rollback' });
-                        } catch (e) {
-                            console.warn('回滚本地描述失败:', e);
-                        }
+                        await pc.setLocalDescription({ type: 'rollback' });
                         await pc.setRemoteDescription(desc);
                     } else {
                         await pc.setRemoteDescription(desc);
                     }
 
                     if (desc.type === 'offer') {
-                        // 优化：添加媒体约束，根据网络状况调整
-                        const answerOptions = {
-                            offerToReceiveVideo: true,
-                            offerToReceiveAudio: true
-                        };
-                        
-                        const answer = await pc.createAnswer(answerOptions);
+                        const answer = await pc.createAnswer();
                         const optimizedSDP = optimizeAudioSDP(answer.sdp);
                         const answerDesc = { type: 'answer', sdp: optimizedSDP };
-                        
-                        try {
-                            await pc.setLocalDescription(answerDesc);
-                            sendSignal(from, { sdp: answerDesc });
-                        } catch (e) {
-                            console.error('设置本地描述失败:', e);
-                            // 尝试重新创建连接
-                            closeConnection(from);
-                            setTimeout(() => createPeerConnection(from), 500);
-                        }
+                        await pc.setLocalDescription(answerDesc);
+                        sendSignal(from, { sdp: answerDesc });
                     }
                     
                     // 处理缓存的 ICE 候选
@@ -2430,11 +2382,6 @@
                 }
             } catch (err) {
                 console.error('信令处理错误:', err);
-                // 处理严重错误，尝试重新建立连接
-                if (err.name === 'InvalidSessionDescriptionError' || err.name === 'OperationError') {
-                    closeConnection(from);
-                    setTimeout(() => createPeerConnection(from), 1000);
-                }
             }
         }
 
@@ -2492,143 +2439,22 @@
 
         // ==================== 发送信令消息 ====================
         function sendSignal(target, data) {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({
-                    type: 'signal',
-                    target: target,
-                    data: data
-                }));
-            }
-        }
-        
-        // ==================== 消息队列处理 ====================
-        function sendMessageWithRetry(message, priority = MESSAGE_PRIORITY.CHAT) {
-            return new Promise((resolve, reject) => {
-                const messageId = Math.random().toString(36).substr(2, 8);
-                const messageObj = {
-                    id: messageId,
-                    message: message,
-                    priority: priority,
-                    attempts: 0,
-                    resolve,
-                    reject
-                };
-                
-                messageQueue.push(messageObj);
-                processMessageQueue();
-            });
-        }
-
-        function processMessageQueue() {
-            if (messageProcessing || messageQueue.length === 0) return;
-            
-            messageProcessing = true;
-            
-            // 按优先级排序
-            messageQueue.sort((a, b) => a.priority - b.priority);
-            
-            const messageObj = messageQueue.shift();
-            
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                try {
-                    ws.send(JSON.stringify(messageObj.message));
-                    messageObj.resolve();
-                    messageProcessing = false;
-                    processMessageQueue();
-                } catch (error) {
-                    handleMessageError(messageObj, error);
-                }
-            } else {
-                handleMessageError(messageObj, new Error('WebSocket not connected'));
-            }
-        }
-
-        function handleMessageError(messageObj, error) {
-            messageObj.attempts++;
-            
-            if (messageObj.attempts < MAX_RETRY_ATTEMPTS) {
-                // 重试
-                setTimeout(() => {
-                    messageQueue.push(messageObj);
-                    messageProcessing = false;
-                    processMessageQueue();
-                }, RETRY_DELAY * messageObj.attempts);
-            } else {
-                // 达到最大重试次数
-                messageObj.reject(error);
-                messageProcessing = false;
-                processMessageQueue();
-            }
-        }
-
-        // ==================== 发送信令消息 ====================
-        function sendSignal(target, data) {
-            if (!ws) return;
-            
-            const message = {
+            sendMessageWithRetry({
                 type: 'signal',
                 target: target,
                 data: data
-            };
-            
-            sendMessageWithRetry(message, MESSAGE_PRIORITY.SIGNAL);
+            });
         }
-
+        
         // ==================== 发送设备状态 ====================
         function sendDeviceStatus() {
-            if (!ws || !isInMeeting) return;
-            
-            myStateSequence++;
-            const message = {
+            sendMessageWithRetry({
                 type: 'device-status',
                 userId: myId,
                 cameraOn: isCameraOn,
                 micOn: isMicOn,
-                sequence: myStateSequence,
-                timestamp: Date.now()
-            };
-            
-            // 发送设备状态，并在发送成功后更新本地状态
-            sendMessageWithRetry(message, MESSAGE_PRIORITY.DEVICE_STATUS)
-                .then(() => {
-                    // 发送成功，更新本地状态
-                    cameraStates.set(myId, isCameraOn);
-                    micStates.set(myId, isMicOn);
-                    stateSequence.set(myId, myStateSequence);
-                })
-                .catch(error => {
-                    console.error('发送设备状态失败:', error);
-                    // 发送失败，重试
-                    setTimeout(sendDeviceStatus, 1000);
-                });
-        }
-
-        // ==================== 同步设备状态 ====================
-        function syncDeviceStatus() {
-            if (!isInMeeting) return;
-            
-            // 确保本地状态与UI一致
-            cameraStates.set(myId, isCameraOn);
-            micStates.set(myId, isMicOn);
-            
-            // 发送设备状态
-            sendDeviceStatus();
-        }
-
-        // ==================== 定期同步设备状态 ====================
-        let deviceStatusSyncInterval = null;
-        function startDeviceStatusSync() {
-            if (deviceStatusSyncInterval) clearInterval(deviceStatusSyncInterval);
-            
-            // 每5秒同步一次设备状态，确保状态一致性
-            deviceStatusSyncInterval = setInterval(syncDeviceStatus, 5000);
-        }
-
-        function stopDeviceStatusSync() {
-            if (deviceStatusSyncInterval) {
-                clearInterval(deviceStatusSyncInterval);
-                deviceStatusSyncInterval = null;
-            }
+                sequence: ++myStateSequence
+            });
         }
 
         // ==================== 新增：切换视频输出弹窗 ====================
@@ -3160,7 +2986,7 @@
         
         // ==================== 发送消息（文本或文件） ====================
         function sendMessage() {
-            if (!isInMeeting) {
+            if (!ws || ws.readyState !== WebSocket.OPEN || !isInMeeting) {
                 updateStatus('请先加入会议', 'error');
                 return;
             }
@@ -3189,25 +3015,26 @@
             
             const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             
-            const chatMessage = {
+            const chatPayload = JSON.stringify({
                 type: 'chat-message',
                 senderId: myId,
                 message: message,
                 timestamp: timestamp
-            };
+            });
 
             // 核心逻辑：多人 Mesh 会议中，聊天信息通过 WebSocket (信令服务器) 转发最为稳健
             // 这样手机端只需发送 1 次请求，而不需要给 3 个对端分别发送 P2P 包，极大地节省了手机的上行带宽
-            sendMessageWithRetry(chatMessage, MESSAGE_PRIORITY.CHAT)
-                .then(() => {
-                    displayChatMessage(myId, message, timestamp, true);
-                    chatInput.value = '';
-                    chatInput.focus();
-                    updateSendButtonState();
-                })
-                .catch(error => {
-                    updateStatus('⚠️ 发送消息失败：' + error.message, 'error');
-                });
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(chatPayload);
+            } else {
+                updateStatus('⚠️ 无法发送消息：信令连接已断开', 'error');
+                return;
+            }
+            
+            displayChatMessage(myId, message, timestamp, true);
+            chatInput.value = '';
+            chatInput.focus();
+            updateSendButtonState();
         }
 
         // ==================== 发送文件 ====================
@@ -3233,73 +3060,55 @@
             }
             
             const fileId = 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            const reader = new FileReader();
             
-            // 显示发送中状态和进度条
+            // 显示发送中状态
             chatSendBtn.disabled = true;
             chatSendBtn.textContent = '发送中...';
             
-            // 创建进度条
-            const progressBar = document.createElement('div');
-            progressBar.className = 'file-progress-bar';
-            progressBar.innerHTML = '<div class="progress-fill" style="width: 0%"></div>';
-            filePreviewArea.appendChild(progressBar);
-            
-            // 读取完整文件
-            const reader = new FileReader();
-            
             reader.onload = function(e) {
-                const progressFill = progressBar.querySelector('.progress-fill');
-                if (progressFill) {
-                    progressFill.style.width = '100%';
-                }
-                
-                // 发送完整文件
-                const fileData = {
-                    fileId: fileId,
-                    fileName: selectedFile.name,
-                    fileType: selectedFile.type,
-                    fileSize: selectedFile.size,
-                    fileData: e.target.result,
-                    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    isLast: true
-                };
-                
-                sendMessageWithRetry({
-                    type: 'file-message',
-                    senderId: myId,
-                    ...fileData
-                }, MESSAGE_PRIORITY.FILE)
-                .then(() => {
-                    // 本地显示
-                    displayFileMessage(myId, {
-                        fileId: fileId,
-                        fileName: selectedFile.name,
-                        fileType: selectedFile.type,
-                        fileSize: selectedFile.size,
-                        fileData: e.target.result,
-                        timestamp: fileData.timestamp
-                    }, true);
-                    updateStatus('✅ 文件发送成功', 'success');
-                })
-                .catch(error => {
-                    updateStatus('❌ 发送文件失败：' + error.message, 'error');
-                })
-                .finally(() => {
-                    // 重置UI状态
-                    cancelFileUpload();
-                    chatSendBtn.textContent = '发送';
-                    updateSendButtonState();
-                });
+                // 使用 setTimeout 将发送操作放到下一个宏任务，避免阻塞当前 UI 渲染
+                setTimeout(() => {
+                    try {
+                        const fileData = {
+                            fileId: fileId,
+                            fileName: selectedFile.name,
+                            fileType: selectedFile.type,
+                            fileSize: selectedFile.size,
+                            fileData: e.target.result,
+                            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        };
+                        
+                        // 发送到服务器（使用带重试的消息发送）
+                        sendMessageWithRetry({
+                            type: 'file-message',
+                            senderId: myId,
+                            ...fileData
+                        });
+                        
+                        // 本地显示
+                        displayFileMessage(myId, fileData, true);
+                        updateStatus('✅ 文件发送成功', 'success');
+                    } catch (err) {
+                        console.error('发送文件失败:', err);
+                        updateStatus('❌ 发送文件出错，可能是文件过大导致内存不足', 'error');
+                    } finally {
+                        // 重置UI状态
+                        cancelFileUpload();
+                        chatSendBtn.textContent = '发送';
+                        updateSendButtonState();
+                    }
+                }, 0);
             };
             
             reader.onerror = function() {
                 updateStatus('文件读取失败', 'error');
                 cancelFileUpload();
+                
+                // 恢复发送按钮状态
                 chatSendBtn.textContent = '发送';
-                updateSendButtonState();
             };
             
-            // 读取文件
             reader.readAsDataURL(selectedFile);
         }
         
@@ -3441,8 +3250,6 @@
                     { urls: 'stun:stun2.l.google.com:19302' },
                     { urls: 'stun:stun3.l.google.com:19302' },
                     { urls: 'stun:stun4.l.google.com:19302' },
-                    { urls: 'stun:stun.services.mozilla.com' },
-                    { urls: 'stun:stun.stunprotocol.org:3478' },
                     {
                         urls: [
                             'turn:openrelay.metered.ca:80',
@@ -3452,14 +3259,9 @@
                         ],
                         username: 'openrelayproject',
                         credential: 'openrelayproject'
-                    },
-                    {
-                        urls: 'turn:turn.anyfirewall.com:443?transport=tcp',
-                        username: 'webrtc',
-                        credential: 'webrtc'
                     }
                 ],
-                iceCandidatePoolSize: 15,
+                iceCandidatePoolSize: 10,
                 iceTransportPolicy: 'all',
                 sdpSemantics: 'unified-plan'
             });
@@ -3541,7 +3343,7 @@
                     }
                 };
                 
-                // 协商处理 (优化版 Perfect Negotiation + 防抖)
+                // 协商处理 (Perfect Negotiation + 防抖)
                 let negotiationTimer = null;
                 pc.onnegotiationneeded = () => {
                     if (negotiationTimer) clearTimeout(negotiationTimer);
@@ -3550,29 +3352,13 @@
                         
                         try {
                             pc.makingOffer = true;
-                            
-                            // 优化：根据网络状况调整offer参数
-                            const offerOptions = {
-                                offerToReceiveVideo: true,
-                                offerToReceiveAudio: true,
-                                iceRestart: pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed'
-                            };
-                            
-                            const offer = await pc.createOffer(offerOptions);
+                            const offer = await pc.createOffer();
                             const optimizedSDP = optimizeAudioSDP(offer.sdp);
                             const offerDesc = { type: 'offer', sdp: optimizedSDP };
-                            
                             await pc.setLocalDescription(offerDesc);
                             sendSignal(peerId, { sdp: offerDesc });
                         } catch (err) {
                             console.error('协商失败:', err);
-                            // 处理严重错误，尝试重新建立连接
-                            if (err.name === 'OperationError' || err.name === 'InvalidSessionDescriptionError') {
-                                closeConnection(peerId);
-                                setTimeout(() => createPeerConnection(peerId), 1000);
-                            } else if (pc.iceConnectionState === 'failed') {
-                                pc.restartIce();
-                            }
                         } finally {
                             pc.makingOffer = false;
                         }
@@ -4125,9 +3911,6 @@
                     }
                 }, 5000);
 
-                // 启动设备状态定期同步
-                startDeviceStatusSync();
-
                 emptyState.classList.add('hidden');
                 updateParticipantsList();
                 updateUIState();
@@ -4156,16 +3939,6 @@
 				clearInterval(qosReportInterval);
 				qosReportInterval = null;
 			}
-
-			// 停止设备状态同步
-			stopDeviceStatusSync();
-
-			// 停止所有统计监控
-			statsIntervals.forEach((intervalId, peerId) => {
-				clearInterval(intervalId);
-			});
-			statsIntervals.clear();
-			peerStatsData.clear();
 
 			// 先发送性能报告（在关闭连接之前）
 			if (ws && ws.readyState === WebSocket.OPEN && isInMeeting) {
@@ -4203,7 +3976,6 @@
 			});
 			connections.clear();
 			remoteStreams.clear();
-			pendingCandidates.clear();
 			
 			// 发送离开消息
 			if (ws && ws.readyState === WebSocket.OPEN) {
@@ -4212,32 +3984,23 @@
 			
 			updateStatus('👋 已离开会议', 'info');
 			
-			members.clear();
-			members.add(myId); // 保留自己的ID
-			cameraStates.clear();
-			micStates.clear();
-			stateSequence.clear();
+			members.delete(myId);
+			cameraStates.delete(myId);
+			micStates.delete(myId);
+			stateSequence.delete(myId);
 			updateParticipantsList();
 			
-			// 移除所有视频容器
-			removeAllVideoContainers();
+			removeAllRemoteVideos();
 			
-			// 显示空状态
-			emptyState.classList.remove('hidden');
+			const videoContainers = videoGrid.querySelectorAll('.video-container');
+			if (videoContainers.length === 0) {
+				emptyState.classList.remove('hidden');
+			}
 			
 			conferenceStatus.textContent = '已连接服务器';
 			
 			updateUIState();
 			restoreAllZoomOnLeave();
-			
-			// 重置网络状态
-			latencyHistory = [];
-			sessionStatsAccumulator = {
-				rttSum: 0,
-				rttSamples: 0,
-				maxLatency: 0,
-				lastPeerLoss: new Map()
-			};
 		}
 
         // ==================== 移除所有视频容器（新增） ====================
