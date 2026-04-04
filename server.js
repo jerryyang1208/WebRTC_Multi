@@ -14,7 +14,24 @@ const app = express();
 app.use(express.json());
 
 const server = https.createServer(sslOptions, app);
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({ 
+    server,
+    maxPayload: 50 * 1024 * 1024, // 最大50MB消息（支持分块传输的大文件）
+    perMessageDeflate: {
+        zlibDeflateOptions: {
+            chunkSize: 1024,
+            memLevel: 7,
+            level: 3 // 低压缩级别，减少CPU占用
+        },
+        zlibInflateOptions: {
+            chunkSize: 10 * 1024
+        },
+        clientNoContextTakeover: true,
+        serverNoContextTakeover: true,
+        serverMaxWindowBits: 10,
+        concurrencyLimit: 10
+    }
+});
 
 // 存储连接
 const clients = new Map(); // id -> {ws, isInMeeting, isAlive}
@@ -241,10 +258,10 @@ wss.on('connection', (ws) => {
     ws.on('message', (data) => {
         try {
             const msg = JSON.parse(data);
+            const client = clients.get(clientId);
             
             switch (msg.type) {
                 case 'join': {
-                    const client = clients.get(clientId);
                     if (!client) break;
                     
                     if (client.isInMeeting && meetingMembers.has(clientId)) {
@@ -266,8 +283,8 @@ wss.on('connection', (ws) => {
                 }
                 
                 case 'leave':
-                    if (clients.get(clientId)?.isInMeeting) {
-                        clients.get(clientId).isInMeeting = false;
+                    if (client?.isInMeeting) {
+                        client.isInMeeting = false;
                         handleMemberLeave(clientId, 'normal');
                     }
                     break;
@@ -320,6 +337,13 @@ wss.on('connection', (ws) => {
                     }
                     break;
                 
+                case 'ping':
+                    // 响应客户端心跳
+                    sendToClient(clientId, 'pong', { timestamp: Date.now() });
+                    // 重置心跳计数
+                    if (client) client.missedHeartbeats = 0;
+                    break;
+                
                 case 'file-message':
                     if (msg.senderId && meetingMembers.has(clientId)) {
                         forwardToMeeting('file-message', {
@@ -329,7 +353,8 @@ wss.on('connection', (ws) => {
                             fileType: msg.fileType,
                             fileSize: msg.fileSize,
                             fileData: msg.fileData,
-                            timestamp: msg.timestamp || new Date().toISOString()
+                            timestamp: msg.timestamp || new Date().toISOString(),
+                            isLast: msg.isLast !== undefined ? msg.isLast : true
                         }, clientId);
                         console.log(`📎 ${clientId} 发送文件: ${msg.fileName}`);
                     }
@@ -367,10 +392,10 @@ server.listen(PORT, () => {
     }
 });
 
-// 心跳检测 (针对移动端优化，延长超时时间)
+// 心跳检测
 const heartbeatInterval = setInterval(() => {
     clients.forEach((client, clientId) => {
-        if (client.missedHeartbeats >= 3) { // 连续3次未响应才断开
+        if (client.missedHeartbeats >= 5) { // 连续5次未响应才断开（50秒超时）
             console.log(`💀 心跳超时 (${client.missedHeartbeats}次)，断开死连接: ${clientId}`);
             if (client.isInMeeting) {
                 client.isInMeeting = false;
@@ -392,7 +417,7 @@ const heartbeatInterval = setInterval(() => {
             client.ws.ping();
         }
     });
-}, 10000); // 10秒检查一次，累计30秒超时
+}, 10000); // 10秒检查一次，累计50秒超时
 
 wss.on('close', () => {
     clearInterval(heartbeatInterval);
